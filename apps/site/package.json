@@ -1,0 +1,22 @@
+{
+  "name": "@layered-graphics/site",
+  "version": "0.1.0-alpha.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro check && astro build",
+    "check": "astro check",
+    "test": "astro check && astro build && playwright test"
+  },
+  "dependencies": {
+    "@astrojs/starlight": "0.41.3",
+    "@layered-graphics/core": "workspace:*",
+    "astro": "7.0.6"
+  },
+  "devDependencies": {
+    "@astrojs/check": "0.9.8",
+    "@playwright/test": "1.61.1",
+    "typescript": "6.0.3"
+  }
+}

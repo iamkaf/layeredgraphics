@@ -1,0 +1,9 @@
+target/
+node_modules/
+dist/
+coverage/
+.astro/
+test-results/
+playwright-report/
+examples/readme-banner/output/
+*.kgfx.tmp

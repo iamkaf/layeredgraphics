@@ -1,0 +1,22 @@
+:root {
+  --sl-color-accent-low: #211852;
+  --sl-color-accent: #8f6dff;
+  --sl-color-accent-high: #ded6ff;
+  --sl-color-white: #f4f7ff;
+  --sl-color-gray-1: #dce2f1;
+  --sl-color-gray-2: #b7c1d9;
+  --sl-color-gray-3: #77829d;
+  --sl-color-gray-4: #4a5b80;
+  --sl-color-gray-5: #202b42;
+  --sl-color-gray-6: #111827;
+  --sl-color-black: #090d18;
+  --lg-cyan: #34e1c5;
+}
+
+body {
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+}
+
+code {
+  font-variant-ligatures: none;
+}

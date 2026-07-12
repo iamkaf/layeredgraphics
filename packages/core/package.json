@@ -1,0 +1,21 @@
+{
+  "name": "@layered-graphics/core",
+  "version": "0.1.0-alpha.1",
+  "type": "module",
+  "files": ["dist"],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build:wasm": "bash ../../scripts/build-wasm.sh",
+    "build": "pnpm build:wasm && tsc -p tsconfig.json && node scripts/copy-generated.mjs",
+    "check": "pnpm build:wasm && tsc -p tsconfig.json --noEmit",
+    "test": "pnpm build"
+  },
+  "devDependencies": {
+    "typescript": "6.0.3"
+  }
+}

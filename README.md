@@ -1,10 +1,26 @@
 # Layered Graphics
 
+![Layered Graphics — headless graphics for every app](apps/site/public/readme-banner.png)
+
 Layered Graphics is a FOSS, browser-first graphics engine for embedding Photoshop-like authoring into applications, scripts, and AI-agent workflows.
 
 The project is headless by design. It provides a portable layered document, compositing and editing semantics, fast previews, high-quality exports, automation APIs, a CLI, and an unstyled editor toolkit. Applications remain in control of their interface and product-specific concepts.
 
-> Project status: planning and specification. The public API and `.kgfx` format are not yet stable.
+> Project status: Milestone 1 implemented. The public API and `.kgfx` format are usable experimental contracts and are not yet stable.
+
+## Try the first milestone
+
+Requirements: a current Rust toolchain, Node.js, pnpm, `wasm32-unknown-unknown`, and `wasm-bindgen-cli` 0.2.126.
+
+```bash
+rustup target add wasm32-unknown-unknown
+cargo install wasm-bindgen-cli --version 0.2.126 --locked
+pnpm install
+./examples/readme-banner/build.sh
+pnpm test
+```
+
+The banner workflow creates an icon and editable banner through public `lg` commands, embeds its image and font assets, validates and inspects the document, renders the PNG, checks the approved fixture, and publishes the result to the landing site. The browser test then opens the same `.kgfx` document and renders it through Rust/WASM.
 
 ## Why Layered Graphics?
 
@@ -53,10 +69,10 @@ Consumers can use the document and renderer alone, add automation, or build a fu
 
 Layered Graphics is developed as one monorepo containing the engine, runtime bindings, CLI, JavaScript packages, editor toolkit, examples, specifications, and tests.
 
-- **Rust** implements the canonical document engine, command reducer, asset/container handling, authoritative CPU renderer, native Node bindings, and native `lg` CLI.
+- **Rust** owns the canonical document engine, command reducer, asset/container handling, authoritative CPU renderer, native Node bindings, and native `lg` CLI. The engine, CLI, and browser/WASM path are implemented in Milestone 1; native Node packaging follows.
 - **WebAssembly** brings the Rust engine and authoritative renderer to browsers and provides the portable execution path for JavaScript runtimes.
-- **TypeScript** provides the public JavaScript SDK over WASM in browsers and native bindings in Node, plus the worker protocol, imperative API, editor toolkit, and optional framework bindings.
-- **WebGPU** powers retained interactive previews. A documented fallback preserves functionality when WebGPU is unavailable.
+- **TypeScript** owns the public JavaScript SDK, worker protocol, imperative API, editor toolkit, and optional framework bindings. Milestone 1 exposes browser validation, inspection, and rendering over WASM.
+- **WebGPU** will power retained interactive previews beginning in Phase 2. The current browser proof uses authoritative CPU/WASM rendering.
 - **Cargo workspaces and pnpm workspaces** manage the Rust and TypeScript portions of the repository.
 - **Astro and Starlight** power the landing and documentation site as a statically deployable monorepo application.
 
@@ -71,7 +87,7 @@ Every document mutation is represented as a validated command. User gestures, im
 ```ts
 doc.execute([
   {
-    type: "layer.add",
+    op: "layerAdd",
     layer: {
       id: "hero",
       type: "image",
@@ -80,7 +96,7 @@ doc.execute([
     },
   },
   {
-    type: "layer.update",
+    op: "layerUpdate",
     id: "hero",
     set: {
       opacity: 0.7,
@@ -139,6 +155,8 @@ The core model includes:
 - Schema version and migration information
 
 The format must be safe to validate without rendering and practical to inspect or modify through the CLI.
+
+The implemented experimental contract is documented in [`.kgfx` v1](docs/spec/kgfx-v1.md) and [Command protocol v1](docs/spec/commands-v1.md).
 
 ## CLI direction
 

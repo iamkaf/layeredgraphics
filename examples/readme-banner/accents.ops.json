@@ -1,0 +1,49 @@
+[
+  {
+    "op": "layerAdd",
+    "layer": {
+      "id": "accent-purple",
+      "name": "Purple rail",
+      "visible": true,
+      "opacity": 0.72,
+      "blendMode": "normal",
+      "transform": { "x": 0, "y": 40, "scaleX": 1, "scaleY": 1 },
+      "type": "fill",
+      "width": 1200,
+      "height": 14,
+      "color": [115, 72, 255, 255]
+    },
+    "parentId": "accents"
+  },
+  {
+    "op": "layerAdd",
+    "layer": {
+      "id": "accent-cyan",
+      "name": "Cyan rail",
+      "visible": true,
+      "opacity": 0.8,
+      "blendMode": "multiply",
+      "transform": { "x": 0, "y": 0, "scaleX": 1, "scaleY": 1 },
+      "type": "fill",
+      "width": 14,
+      "height": 630,
+      "color": [52, 225, 197, 255]
+    },
+    "parentId": "accents"
+  },
+  {
+    "op": "layerAdd",
+    "layer": {
+      "id": "lower-panel",
+      "name": "Lower panel",
+      "visible": true,
+      "opacity": 0.7,
+      "blendMode": "normal",
+      "transform": { "x": 430, "y": 480, "scaleX": 1, "scaleY": 1 },
+      "type": "fill",
+      "width": 690,
+      "height": 2,
+      "color": [74, 91, 128, 255]
+    }
+  }
+]

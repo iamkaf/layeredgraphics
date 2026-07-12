@@ -1,0 +1,14 @@
+[package]
+name = "lg-wasm"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+base64.workspace = true
+lg-core = { path = "../lg-core" }
+serde_json.workspace = true
+wasm-bindgen.workspace = true

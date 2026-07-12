@@ -1,0 +1,62 @@
+---
+import StarlightPage from "@astrojs/starlight/components/StarlightPage.astro";
+---
+
+<StarlightPage frontmatter={{ title: "Browser rendering proof", description: "Render the same .kgfx banner through the Rust/WASM engine in your browser." }}>
+  <p>This page fetches the editable banner document and sends it to the same Rust renderer compiled to WebAssembly. No server-side image API or Canvas compositing is involved.</p>
+  <div class="proof" data-proof-state="loading">
+    <div class="status" role="status">Loading the WASM engine…</div>
+    <img hidden alt="Banner rendered from the .kgfx document by WebAssembly" />
+    <dl hidden>
+      <div><dt>Engine</dt><dd data-version></dd></div>
+      <div><dt>Document</dt><dd data-document></dd></div>
+      <div><dt>Output</dt><dd data-output></dd></div>
+    </dl>
+  </div>
+  <p><a href="/readme-banner.kgfx" download>Download the editable <code>readme-banner.kgfx</code> fixture</a></p>
+</StarlightPage>
+
+<script>
+  import { engineVersion, initialize, inspectKgfx, renderKgfxPng, validateKgfx } from "@layered-graphics/core";
+
+  const root = document.querySelector<HTMLElement>(".proof");
+  const status = root?.querySelector<HTMLElement>(".status");
+  try {
+    await initialize();
+    const response = await fetch("/readme-banner.kgfx");
+    if (!response.ok) throw new Error(`Document request failed with ${response.status}`);
+    const bytes = new Uint8Array(await response.arrayBuffer());
+    const diagnostics = validateKgfx(bytes);
+    if (diagnostics.length) throw new Error(`Document has ${diagnostics.length} diagnostic(s)`);
+    const manifest = inspectKgfx(bytes) as { canvas: { width: number; height: number }; layers: unknown[]; revision: number };
+    const png = renderKgfxPng(bytes);
+    const image = root?.querySelector<HTMLImageElement>("img");
+    if (image) {
+      image.src = URL.createObjectURL(new Blob([Uint8Array.from(png).buffer], { type: "image/png" }));
+      image.hidden = false;
+    }
+    const details = root?.querySelector<HTMLElement>("dl");
+    if (details) details.hidden = false;
+    root?.querySelector<HTMLElement>("[data-version]")?.append(engineVersion());
+    root?.querySelector<HTMLElement>("[data-document]")?.append(`${manifest.canvas.width}×${manifest.canvas.height}, revision ${manifest.revision}`);
+    root?.querySelector<HTMLElement>("[data-output]")?.append(`${png.byteLength.toLocaleString()} PNG bytes rendered locally`);
+    if (status) status.textContent = "Rendered successfully in this browser.";
+    root?.setAttribute("data-proof-state", "ready");
+  } catch (error) {
+    if (status) status.textContent = `Browser proof failed: ${error instanceof Error ? error.message : String(error)}`;
+    root?.setAttribute("data-proof-state", "error");
+  }
+</script>
+
+<style>
+  .proof { padding: 1rem; border: 1px solid var(--sl-color-gray-5); border-radius: .75rem; background: var(--sl-color-gray-6); }
+  .status { margin-bottom: 1rem; color: var(--sl-color-gray-2); }
+  [data-proof-state="ready"] .status { color: var(--lg-cyan); }
+  [data-proof-state="error"] .status { color: #ff8b8b; }
+  img { display: block; width: 100%; height: auto; border-radius: .4rem; }
+  dl { display: grid; grid-template-columns: repeat(3, 1fr); gap: .75rem; }
+  dl div { padding: .75rem; background: var(--sl-color-black); border-radius: .4rem; }
+  dt { color: var(--sl-color-gray-3); font-size: .8rem; }
+  dd { margin: .35rem 0 0; }
+  @media (max-width: 50rem) { dl { grid-template-columns: 1fr; } }
+</style>
