@@ -516,7 +516,7 @@ fn asset_add(args: AssetAddArgs) -> Result<()> {
                 .reference
                 .unwrap_or_else(|| args.source.to_string_lossy().into_owned()),
             byte_length: bytes.len() as u64,
-            sha256: format!("{:x}", Sha256::digest(&bytes)),
+            sha256: hex::encode(Sha256::digest(&bytes)),
             original_name,
             author: None,
         }
@@ -540,7 +540,7 @@ fn asset_relink(args: AssetRelinkArgs) -> Result<()> {
             .reference
             .unwrap_or_else(|| args.source.to_string_lossy().into_owned()),
         byte_length: bytes.len() as u64,
-        sha256: format!("{:x}", Sha256::digest(&bytes)),
+        sha256: hex::encode(Sha256::digest(&bytes)),
     };
     mutate(args.file, vec![command], args.json)
 }

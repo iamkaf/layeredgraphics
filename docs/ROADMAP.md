@@ -4,8 +4,9 @@ Layered Graphics already has an executable document engine, native and browser A
 
 ```mermaid
 flowchart LR
-  B[Current baseline<br/>portable documents<br/>commands + history<br/>CLI · Node · WASM<br/>retained previews] --> P[Graphics vocabulary<br/>masks · clipping · shapes<br/>text · effects · paint]
-  P --> E[Editor behavior<br/>viewport · hit testing<br/>transforms · snapping<br/>input + clipboard]
+  B[Milestone 1<br/>executable documents<br/>retained previews] --> M[Milestone 2<br/>template-driven artwork<br/>shapes · gradients · text<br/>image fitting · SVG]
+  M --> P[Broader graphics vocabulary<br/>masks · effects<br/>selections · paint]
+  P --> E[Editor behavior<br/>hit testing · transforms<br/>snapping · input · clipboard]
   E --> S[Production proof<br/>Spriteform integration<br/>package distribution<br/>stable compatibility]
 ```
 
@@ -26,13 +27,15 @@ The concise [completion record](FOUNDATION_AUDIT.md) links to the executable evi
 
 The next outcome is a coherent Photoshop-like editing vocabulary. Work is sliced vertically so each addition includes persistence, commands, inspection, history, preview, export, docs, and conformance coverage.
 
+The immediate target is [Milestone 2: template-driven artwork](MILESTONE_2.md). It proves a reusable application-level workflow before the engine attempts selections, painting, filters, or general-purpose editor interaction. Structured recipes compile into editable shapes, paths, gradients, production text, fitted or clipped image layers, and deterministic PNG/SVG output while templates and publication rules remain application-owned.
+
 Recommended sequence:
 
-1. group isolation, broader blend coverage, raster masks, clipping chains
-2. editable shapes, gradients, and production text/font handling
-3. adjustments and bounded filters
+1. Milestone 2 compositing needs: group isolation and rectangular clipping
+2. Milestone 2 editable sources: shapes, paths, strokes, gradients, production text/font handling, image fit/tile helpers, and SVG export
+3. broader masks, clipping chains, blend coverage, adjustments, and bounded filters
 4. selections and selection-aware raster operations
-5. brush strokes, fill, destructive raster actions, alignment helpers
+5. brush strokes, fill, destructive raster actions, and alignment helpers
 
 Exit signal: an agent can create and revise a polished composition using public interfaces while every primitive remains editable. See [Graphics Primitives](plans/03-graphics-primitives.md).
 

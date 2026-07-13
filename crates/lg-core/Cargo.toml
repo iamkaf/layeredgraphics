@@ -17,6 +17,7 @@ name = "lg_core"
 [dependencies]
 base64.workspace = true
 fontdue.workspace = true
+hex.workspace = true
 image.workspace = true
 serde.workspace = true
 serde_json.workspace = true

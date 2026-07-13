@@ -25,7 +25,7 @@ jobs:
       prerelease: ${{ steps.release.outputs.prerelease }}
       npm_tag: ${{ steps.release.outputs.npm_tag }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: main
       - id: release
@@ -74,7 +74,7 @@ jobs:
             extension: .exe
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: main
       - uses: dtolnay/rust-toolchain@stable
@@ -106,7 +106,7 @@ jobs:
           Copy-Item "target/$env:TARGET/release/lg.exe" release/package/lg.exe
           Copy-Item LICENSE release/package/LICENSE
           Compress-Archive -Path release/package/lg.exe,release/package/LICENSE -DestinationPath "release/layered-graphics-$env:VERSION-$env:LABEL.zip"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: cli-${{ matrix.label }}
           path: release/layered-graphics-*
@@ -116,16 +116,16 @@ jobs:
     needs: metadata
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: main
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: wasm32-unknown-unknown
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
         with:
           version: 11.5.2
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: 24
           cache: pnpm
@@ -138,7 +138,7 @@ jobs:
           mkdir -p "$GITHUB_WORKSPACE/release/npm"
           pnpm --filter @layered-graphics/core pack --pack-destination "$GITHUB_WORKSPACE/release/npm"
           pnpm --filter @layered-graphics/browser pack --pack-destination "$GITHUB_WORKSPACE/release/npm"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: npm-packages
           path: release/npm/*.tgz
@@ -148,7 +148,7 @@ jobs:
     needs: metadata
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: main
       - env:
@@ -160,7 +160,7 @@ jobs:
             apps/site/public/showcase.kgfx \
             apps/site/public/readme-banner.kgfx \
             examples/readme-banner/accents.ops.json
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: release-extras
           path: release/*.tar.gz
@@ -176,24 +176,24 @@ jobs:
       contents: write
       id-token: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: main
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           pattern: cli-*
           path: release
           merge-multiple: true
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: npm-packages
           path: release/npm
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: release-extras
           path: release
       - uses: dtolnay/rust-toolchain@stable
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: 24
           registry-url: https://registry.npmjs.org

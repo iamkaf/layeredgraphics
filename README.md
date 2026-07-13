@@ -123,11 +123,11 @@ The architecture is Rust + WebAssembly + TypeScript + WebGPU, in a Cargo/pnpm mo
 
 ## Lean roadmap
 
-1. Expand compositing with masks, clipping, shapes, richer text, gradients, adjustments, selections, and paint.
-2. Add the framework-neutral viewport, hit-testing, transforms, snapping, clipboard, and input controllers needed by custom editors.
-3. Prove the engine in Spriteform, harden packages and migrations, then stabilize v1.
+1. **Milestone 2:** power a template-driven artwork studio with editable shapes, gradients, production text, fitted and clipped images, and PNG/SVG export.
+2. Expand the graphics vocabulary with masks, blend modes, adjustments, filters, selections, and paint.
+3. Add framework-neutral hit testing, transforms, snapping, clipboard, and input controllers, then harden production integrations and stabilize v1.
 
-See the [roadmap](docs/ROADMAP.md) and [implementation plans](docs/plans/) for scope and acceptance criteria.
+See the [Milestone 2 definition](docs/MILESTONE_2.md), [roadmap](docs/ROADMAP.md), and [implementation plans](docs/plans/) for scope and acceptance criteria.
 
 ## Contributing
 
