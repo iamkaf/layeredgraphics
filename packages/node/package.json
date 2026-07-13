@@ -32,6 +32,6 @@
     "@layered-graphics/core": "workspace:*"
   },
   "devDependencies": {
-    "@napi-rs/cli": "3.7.2"
+    "@napi-rs/cli": "3.7.3"
   }
 }
