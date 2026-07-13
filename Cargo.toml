@@ -29,7 +29,7 @@ thiserror = "2.0"
 tiny-skia = "0.11"
 uuid = { version = "1.11", features = ["v4", "js"] }
 wasm-bindgen = "0.2"
-zip = { version = "2.2", default-features = false, features = ["deflate"] }
+zip = { version = "8.6", default-features = false, features = ["deflate"] }
 napi = { version = "3.10", default-features = false, features = ["napi8"] }
 napi-derive = "3.5"
 napi-build = "2.3"
