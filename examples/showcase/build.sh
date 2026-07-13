@@ -9,7 +9,7 @@ LG="$ROOT/target/debug/lg"
 mkdir -p "$OUTPUT" "$ROOT/apps/site/public"
 rm -f "$OUTPUT/showcase.kgfx" "$OUTPUT/showcase.png"
 
-cargo build --quiet --manifest-path "$ROOT/Cargo.toml" -p lg-cli
+cargo build --quiet --manifest-path "$ROOT/Cargo.toml" -p layered-graphics-cli
 
 "$LG" new "$OUTPUT/showcase.kgfx" --id lg-showcase-v1 --width 1440 --height 960 --dpi 144
 "$LG" asset add "$OUTPUT/showcase.kgfx" --id layers-art "$EXAMPLE/assets/layers.png"

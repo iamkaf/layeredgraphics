@@ -5,12 +5,13 @@ edition.workspace = true
 license.workspace = true
 repository.workspace = true
 description = "Native Node.js bindings for the Layered Graphics engine"
+publish = false
 
 [lib]
 crate-type = ["cdylib"]
 
 [dependencies]
-lg-core = { version = "0.1.0-alpha.1", path = "../lg-core" }
+lg-core = { package = "layered-graphics", version = "0.1.0-alpha.1", path = "../lg-core" }
 napi.workspace = true
 napi-derive.workspace = true
 serde_json.workspace = true

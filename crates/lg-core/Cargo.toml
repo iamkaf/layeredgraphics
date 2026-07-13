@@ -1,10 +1,18 @@
 [package]
-name = "lg-core"
+name = "layered-graphics"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 repository.workspace = true
+homepage.workspace = true
+rust-version.workspace = true
+keywords.workspace = true
+categories.workspace = true
+readme = "README.md"
 description = "Canonical document, command, container, inspection, and rendering engine for Layered Graphics"
+
+[lib]
+name = "lg_core"
 
 [dependencies]
 base64.workspace = true

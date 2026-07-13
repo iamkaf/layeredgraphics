@@ -6,7 +6,7 @@ description: Create, inspect, and render a layered document with lg.
 The native `lg` executable is an authoring interface for humans, scripts, and agents.
 
 ```bash
-cargo build -p lg-cli
+cargo build -p layered-graphics-cli
 alias lg="$PWD/target/debug/lg"
 ```
 

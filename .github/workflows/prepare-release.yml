@@ -1,0 +1,68 @@
+name: Prepare release
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: Version bump to prepare
+        type: choice
+        required: true
+        default: prerelease
+        options: [prerelease, patch, minor, major]
+      prerelease_id:
+        description: Identifier used by prerelease bumps
+        type: string
+        required: true
+        default: alpha
+
+permissions:
+  actions: write
+  contents: write
+  pull-requests: write
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.5.2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Update every release manifest
+        id: version
+        run: pnpm release:prepare "${{ inputs.bump }}" "${{ inputs.prerelease_id }}"
+      - name: Commit the release branch
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          branch="release/v$VERSION"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B "$branch"
+          git add Cargo.toml Cargo.lock package.json pnpm-lock.yaml packages apps/site/package.json crates CHANGELOG.md
+          git commit -m "release: v$VERSION"
+          git push --force-with-lease origin "$branch"
+          echo "branch=$branch" >> "$GITHUB_ENV"
+      - name: Open or update the release pull request
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          if gh pr view "$branch" >/dev/null 2>&1; then
+            gh pr edit "$branch" --title "release: v$VERSION" --body "Synchronizes every Cargo and npm manifest, lockfile, and the changelog for v$VERSION. Merge this PR, then run **Publish release** with version \`$VERSION\`."
+          else
+            gh pr create --base main --head "$branch" --title "release: v$VERSION" --body "Synchronizes every Cargo and npm manifest, lockfile, and the changelog for v$VERSION. Merge this PR, then run **Publish release** with version \`$VERSION\`."
+          fi
+      - name: Run protected-branch checks on the release commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run ci.yml --ref "$branch"

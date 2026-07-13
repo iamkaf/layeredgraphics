@@ -12,6 +12,10 @@ version = "0.1.0-alpha.1"
 edition = "2024"
 license = "MIT"
 repository = "https://github.com/iamkaf/layeredgraphics"
+homepage = "https://iamkaf.github.io/layeredgraphics/"
+rust-version = "1.85"
+keywords = ["graphics", "image", "layers", "compositing"]
+categories = ["graphics", "multimedia::images"]
 
 [workspace.dependencies]
 anyhow = "1.0"

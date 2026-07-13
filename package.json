@@ -1,5 +1,6 @@
 {
   "name": "layered-graphics-monorepo",
+  "version": "0.1.0-alpha.1",
   "private": true,
   "description": "Headless graphics authoring for applications, scripts, browsers, and agents.",
   "license": "MIT",
@@ -11,6 +12,7 @@
     "test": "cargo test --workspace && pnpm -r test",
     "benchmark": "./scripts/run-benchmarks.sh --output /tmp/layered-graphics-benchmarks.json && node scripts/check-benchmarks.mjs /tmp/layered-graphics-benchmarks.json benchmarks/results-browser-chromium149.json",
     "site:dev": "pnpm --filter @layered-graphics/site dev",
-    "site:build": "pnpm --filter @layered-graphics/core build && pnpm --filter @layered-graphics/browser build && pnpm --filter @layered-graphics/site build"
+    "site:build": "pnpm --filter @layered-graphics/core build && pnpm --filter @layered-graphics/browser build && pnpm --filter @layered-graphics/site build",
+    "release:prepare": "node scripts/prepare-release.mjs"
   }
 }

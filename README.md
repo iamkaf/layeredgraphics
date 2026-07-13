@@ -24,6 +24,17 @@ pnpm test
 
 Explore the [documentation](https://iamkaf.github.io/layeredgraphics/docs/), run the [in-browser rendering proof](https://iamkaf.github.io/layeredgraphics/playground/), or inspect the [benchmark results](docs/BENCHMARKS.md).
 
+## Install a release
+
+After the first registry release:
+
+```bash
+npm install @layered-graphics/core @layered-graphics/browser
+cargo install layered-graphics-cli
+```
+
+GitHub Releases also provide prebuilt `lg` binaries for Linux, macOS, and Windows, plus checksums, schemas, and editable examples. See the [release operator guide](docs/RELEASING.md) for the automated version and publication process.
+
 ## What works today
 
 | Area | Current capability |

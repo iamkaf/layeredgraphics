@@ -25,6 +25,7 @@ export default defineConfig({
           { label: "Technology stack", link: "/docs/project/technology/" },
           { label: "Runtime support", link: "/docs/project/support/" },
           { label: "Benchmarks", link: "/docs/project/benchmarks/" },
+          { label: "Releasing", link: "/docs/project/releasing/" },
           { label: "Foundation evidence", link: "/docs/project/audit/" },
         ] },
       ],

@@ -1,12 +1,12 @@
 {
   "name": "@layered-graphics/node",
   "version": "0.1.0-alpha.1",
+  "private": true,
   "description": "Native Node.js document and rendering API for Layered Graphics.",
   "license": "MIT",
   "repository": { "type": "git", "url": "git+https://github.com/iamkaf/layeredgraphics.git", "directory": "packages/node" },
   "homepage": "https://iamkaf.github.io/layeredgraphics/",
   "keywords": ["graphics", "image", "layers", "node", "napi"],
-  "publishConfig": { "access": "public" },
   "type": "commonjs",
   "main": "sdk.cjs",
   "types": "sdk.d.ts",

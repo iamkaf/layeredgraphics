@@ -9,7 +9,7 @@ LG="$ROOT/target/debug/lg"
 mkdir -p "$OUTPUT" "$ROOT/apps/site/public"
 rm -f "$OUTPUT/icon.kgfx" "$OUTPUT/icon.png" "$OUTPUT/banner.kgfx" "$OUTPUT/banner.png" "$OUTPUT/inspect.json"
 
-cargo build --quiet --manifest-path "$ROOT/Cargo.toml" -p lg-cli
+cargo build --quiet --manifest-path "$ROOT/Cargo.toml" -p layered-graphics-cli
 
 "$LG" new "$OUTPUT/icon.kgfx" --id lg-readme-icon-v1 --width 256 --height 256 --dpi 72
 "$LG" layer add "$OUTPUT/icon.kgfx" --type group --id icon-shapes --name "Icon shapes"
