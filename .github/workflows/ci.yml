@@ -19,7 +19,7 @@ jobs:
           targets: wasm32-unknown-unknown
           components: rustfmt, clippy
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
         with:
           version: 11.5.2
 
@@ -69,7 +69,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
         with:
           version: 11.5.2
       - uses: actions/setup-node@v4
@@ -93,7 +93,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
         with:
           version: 11.5.2
       - uses: actions/setup-node@v4
