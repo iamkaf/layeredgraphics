@@ -12,5 +12,3 @@ All notable changes are recorded here. The project follows [Keep a Changelog](ht
 - PNG, JPEG, and WebP export
 - Rust, native CLI, browser WASM, browser-worker, and native Node surfaces
 - Retained WebGPU/Canvas2D browser previews and bounded warm batches
-
-The current package version is `0.1.0-alpha.1`; no package or crate release has been published from this repository yet.

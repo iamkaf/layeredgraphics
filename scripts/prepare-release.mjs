@@ -67,9 +67,10 @@ if (/^\d+\.\d+\.\d+(?:-[0-9A-Za-z-]+\.\d+)?$/.test(argument)) {
 if (next === current) throw new Error(`Version is already ${current}`);
 
 for (const path of jsonFiles) {
-  const contents = JSON.parse(read(path));
-  contents.version = next;
-  write(path, `${JSON.stringify(contents, null, 2)}\n`);
+  const contents = read(path);
+  const updated = contents.replace(/("version"\s*:\s*")[^"]+/, `$1${next}`);
+  if (contents === updated) throw new Error(`Could not update version in ${path}`);
+  write(path, updated);
 }
 
 let cargo = read("Cargo.toml");
