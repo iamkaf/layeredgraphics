@@ -7,3 +7,4 @@ test-results/
 playwright-report/
 examples/readme-banner/output/
 *.kgfx.tmp
+*.node

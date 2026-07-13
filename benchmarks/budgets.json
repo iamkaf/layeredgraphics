@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "profile": "release",
+  "notes": "Initial alert thresholds from the July 2026 implementation baseline. Correctness gates are strict; performance regressions require review because shared CI hosts are noisy.",
+  "budgets": {
+    "sprite-retained": { "p95Ms": 25, "minimumWarmCacheHitRate": 0.9 },
+    "general-2k-retained": { "p95Ms": 900, "maximumCacheBytes": 268435456 },
+    "general-4k-retained": { "p95Ms": 4500, "maximumCacheBytes": 268435456 },
+    "deep-220-retained": { "p95Ms": 600, "maximumCacheBytes": 268435456 },
+    "batch-32-warm": { "p95Ms": 250, "minimumColdToWarmSpeedup": 1.02 },
+    "workerInteractive": { "p95Ms": 50, "mainThreadLongTasks": 0 },
+    "workerPreview": { "p95Ms": 250 },
+    "workerQueue": { "maximumPendingPreviews": 1 },
+    "batch": { "maximumConcurrency": 8, "maximumRetainedBytes": 268435456 }
+  }
+}

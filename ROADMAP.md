@@ -18,6 +18,8 @@ Each phase expands what these fixtures can demonstrate. Regressions in any previ
 
 ## Phase 1: Executable document
 
+Status: complete (2026-07-12).
+
 Establish the product contract: `.kgfx`, assets, commands, history, inspection, a reference renderer, and the initial CLI.
 
 Primary outcomes:
@@ -32,6 +34,8 @@ Primary outcomes:
 Detailed plan: [Phase 1 — Executable Document](docs/plans/01-executable-document.md)
 
 ## Phase 2: Browser preview and rendering performance
+
+Status: complete (2026-07-12).
 
 Add the retained, incremental rendering architecture needed for interactive browser applications and high-throughput batch jobs.
 

@@ -1,0 +1,657 @@
+{
+  "$defs": {
+    "BlendMode": {
+      "enum": [
+        "normal",
+        "multiply"
+      ],
+      "type": "string"
+    },
+    "Command": {
+      "oneOf": [
+        {
+          "properties": {
+            "color": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/Rgba"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "dpi": {
+              "default": null,
+              "format": "float",
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "height": {
+              "default": null,
+              "format": "uint32",
+              "minimum": 0,
+              "type": [
+                "integer",
+                "null"
+              ]
+            },
+            "op": {
+              "const": "documentUpdate",
+              "type": "string"
+            },
+            "width": {
+              "default": null,
+              "format": "uint32",
+              "minimum": 0,
+              "type": [
+                "integer",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "op"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "index": {
+              "default": null,
+              "format": "uint",
+              "minimum": 0,
+              "type": [
+                "integer",
+                "null"
+              ]
+            },
+            "layer": {
+              "$ref": "#/$defs/Layer"
+            },
+            "op": {
+              "const": "layerAdd",
+              "type": "string"
+            },
+            "parentId": {
+              "default": null,
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "op",
+            "layer"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "op": {
+              "const": "layerUpdate",
+              "type": "string"
+            },
+            "set": {
+              "$ref": "#/$defs/LayerPatch"
+            }
+          },
+          "required": [
+            "op",
+            "id",
+            "set"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "op": {
+              "const": "layerRemove",
+              "type": "string"
+            }
+          },
+          "required": [
+            "op",
+            "id"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "above": {
+              "default": null,
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "below": {
+              "default": null,
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "id": {
+              "type": "string"
+            },
+            "op": {
+              "const": "layerMove",
+              "type": "string"
+            },
+            "parentId": {
+              "default": null,
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "to": {
+              "default": null,
+              "format": "uint",
+              "minimum": 0,
+              "type": [
+                "integer",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "op",
+            "id"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "author": {
+              "default": null
+            },
+            "bytesBase64": {
+              "type": "string"
+            },
+            "id": {
+              "type": "string"
+            },
+            "mediaType": {
+              "type": "string"
+            },
+            "op": {
+              "const": "assetAdd",
+              "type": "string"
+            },
+            "originalName": {
+              "default": null,
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "op",
+            "id",
+            "mediaType",
+            "bytesBase64"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "author": {
+              "default": null
+            },
+            "byteLength": {
+              "format": "uint64",
+              "minimum": 0,
+              "type": "integer"
+            },
+            "id": {
+              "type": "string"
+            },
+            "mediaType": {
+              "type": "string"
+            },
+            "op": {
+              "const": "assetLink",
+              "type": "string"
+            },
+            "originalName": {
+              "default": null,
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "reference": {
+              "type": "string"
+            },
+            "sha256": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "op",
+            "id",
+            "mediaType",
+            "reference",
+            "byteLength",
+            "sha256"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "byteLength": {
+              "format": "uint64",
+              "minimum": 0,
+              "type": "integer"
+            },
+            "id": {
+              "type": "string"
+            },
+            "op": {
+              "const": "assetRelink",
+              "type": "string"
+            },
+            "reference": {
+              "type": "string"
+            },
+            "sha256": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "op",
+            "id",
+            "reference",
+            "byteLength",
+            "sha256"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "op": {
+              "const": "assetRemove",
+              "type": "string"
+            }
+          },
+          "required": [
+            "op",
+            "id"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "namespace": {
+              "type": "string"
+            },
+            "op": {
+              "const": "extensionSet",
+              "type": "string"
+            },
+            "value": true
+          },
+          "required": [
+            "op",
+            "namespace",
+            "value"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "namespace": {
+              "type": "string"
+            },
+            "op": {
+              "const": "extensionRemove",
+              "type": "string"
+            }
+          },
+          "required": [
+            "op",
+            "namespace"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "Layer": {
+      "oneOf": [
+        {
+          "properties": {
+            "assetId": {
+              "type": "string"
+            },
+            "type": {
+              "const": "image",
+              "type": "string"
+            }
+          },
+          "required": [
+            "type",
+            "assetId"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "color": {
+              "$ref": "#/$defs/Rgba"
+            },
+            "height": {
+              "format": "uint32",
+              "minimum": 0,
+              "type": "integer"
+            },
+            "type": {
+              "const": "fill",
+              "type": "string"
+            },
+            "width": {
+              "format": "uint32",
+              "minimum": 0,
+              "type": "integer"
+            }
+          },
+          "required": [
+            "type",
+            "width",
+            "height",
+            "color"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "color": {
+              "$ref": "#/$defs/Rgba"
+            },
+            "fontAssetId": {
+              "type": "string"
+            },
+            "fontSize": {
+              "format": "float",
+              "type": "number"
+            },
+            "text": {
+              "type": "string"
+            },
+            "type": {
+              "const": "text",
+              "type": "string"
+            }
+          },
+          "required": [
+            "type",
+            "text",
+            "fontAssetId",
+            "fontSize",
+            "color"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "children": {
+              "default": [],
+              "items": {
+                "$ref": "#/$defs/Layer"
+              },
+              "type": "array"
+            },
+            "type": {
+              "const": "group",
+              "type": "string"
+            }
+          },
+          "required": [
+            "type"
+          ],
+          "type": "object"
+        }
+      ],
+      "properties": {
+        "blendMode": {
+          "$ref": "#/$defs/BlendMode",
+          "default": "normal"
+        },
+        "id": {
+          "default": "",
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "opacity": {
+          "default": 1.0,
+          "format": "float",
+          "type": "number"
+        },
+        "transform": {
+          "$ref": "#/$defs/Transform",
+          "default": {
+            "scaleX": 1.0,
+            "scaleY": 1.0,
+            "x": 0.0,
+            "y": 0.0
+          }
+        },
+        "visible": {
+          "default": true,
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "type": "object"
+    },
+    "LayerPatch": {
+      "properties": {
+        "assetId": {
+          "default": null,
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "blendMode": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/BlendMode"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "color": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Rgba"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "fontAssetId": {
+          "default": null,
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "fontSize": {
+          "default": null,
+          "format": "float",
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "height": {
+          "default": null,
+          "format": "uint32",
+          "minimum": 0,
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "name": {
+          "default": null,
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "opacity": {
+          "default": null,
+          "format": "float",
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "scaleX": {
+          "default": null,
+          "format": "float",
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "scaleY": {
+          "default": null,
+          "format": "float",
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "text": {
+          "default": null,
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "visible": {
+          "default": null,
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "width": {
+          "default": null,
+          "format": "uint32",
+          "minimum": 0,
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "x": {
+          "default": null,
+          "format": "float",
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "y": {
+          "default": null,
+          "format": "float",
+          "type": [
+            "number",
+            "null"
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "Rgba": {
+      "maxItems": 4,
+      "minItems": 4,
+      "prefixItems": [
+        {
+          "format": "uint8",
+          "maximum": 255,
+          "minimum": 0,
+          "type": "integer"
+        },
+        {
+          "format": "uint8",
+          "maximum": 255,
+          "minimum": 0,
+          "type": "integer"
+        },
+        {
+          "format": "uint8",
+          "maximum": 255,
+          "minimum": 0,
+          "type": "integer"
+        },
+        {
+          "format": "uint8",
+          "maximum": 255,
+          "minimum": 0,
+          "type": "integer"
+        }
+      ],
+      "type": "array"
+    },
+    "Transform": {
+      "properties": {
+        "scaleX": {
+          "default": 1.0,
+          "format": "float",
+          "type": "number"
+        },
+        "scaleY": {
+          "default": 1.0,
+          "format": "float",
+          "type": "number"
+        },
+        "x": {
+          "default": 0.0,
+          "format": "float",
+          "type": "number"
+        },
+        "y": {
+          "default": 0.0,
+          "format": "float",
+          "type": "number"
+        }
+      },
+      "type": "object"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "items": {
+    "$ref": "#/$defs/Command"
+  },
+  "title": "Array_of_Command",
+  "type": "array"
+}

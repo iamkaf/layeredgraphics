@@ -2,6 +2,8 @@
 
 Status: complete.
 
+Historical note: Phases 1 and 2 now supersede the deferred boundaries recorded by this first vertical milestone. Current evidence is maintained in [Phase 1/2 completion audit](PHASES_1_2_AUDIT.md).
+
 This file maps each milestone requirement to executable evidence in the repository.
 
 ## Workspace
@@ -83,9 +85,9 @@ The generated banner appears in the repository README and on the site landing pa
 - Starlight provides getting-started, CLI, concepts, roadmap, and technology pages plus Pagefind search and sitemap output.
 - Browser tests verify the landing page and live WASM proof.
 
-## Deferred boundaries
+## Boundaries deferred at milestone completion
 
-Milestone source code intentionally does not implement WebGPU, incremental preview, undo/redo, document diffing, painting, selections, masks, clipping, adjustment layers, advanced filters, JPEG/WebP output, Spriteform integration, or batch thumbnails. Planning documentation may refer to these future phases.
+At milestone completion the code did not yet implement WebGPU, incremental preview, undo/redo, document diffing, JPEG/WebP output or batch thumbnails. Phases 1 and 2 subsequently implemented those foundations. Painting, selections, masks, clipping, adjustment layers, advanced filters and Spriteform integration remain later-phase work.
 
 ## Reproduction
 

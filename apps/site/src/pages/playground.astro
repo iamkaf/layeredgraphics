@@ -14,10 +14,17 @@ import StarlightPage from "@astrojs/starlight/components/StarlightPage.astro";
     </dl>
   </div>
   <p><a href="/readme-banner.kgfx" download>Download the editable <code>readme-banner.kgfx</code> fixture</a></p>
+  <h2>Retained worker preview</h2>
+  <p>The canvas below is rendered in a dedicated worker. WebGPU presents it when available; Canvas2D is the tested fallback.</p>
+  <div class="worker-proof" data-worker-proof="loading">
+    <canvas width="320" height="120" aria-label="Worker-rendered Layered Graphics preview"></canvas>
+    <output>Starting render worker…</output>
+  </div>
 </StarlightPage>
 
 <script>
-  import { engineVersion, initialize, inspectKgfx, renderKgfxPng, validateKgfx } from "@layered-graphics/core";
+  import { CommandExecutionError, GraphicsDocument, engineVersion, initialize, inspectKgfx, renderKgfxPng, validateKgfx, type Command } from "@layered-graphics/core";
+  import { BrowserRenderSession } from "@layered-graphics/browser";
 
   const root = document.querySelector<HTMLElement>(".proof");
   const status = root?.querySelector<HTMLElement>(".status");
@@ -40,8 +47,109 @@ import StarlightPage from "@astrojs/starlight/components/StarlightPage.astro";
     root?.querySelector<HTMLElement>("[data-version]")?.append(engineVersion());
     root?.querySelector<HTMLElement>("[data-document]")?.append(`${manifest.canvas.width}×${manifest.canvas.height}, revision ${manifest.revision}`);
     root?.querySelector<HTMLElement>("[data-output]")?.append(`${png.byteLength.toLocaleString()} PNG bytes rendered locally`);
+    const authored = await GraphicsDocument.create({ width: 8, height: 8 });
+    authored.layers.add({ id: "proof-fill", type: "fill", width: 8, height: 8, color: [52, 225, 197, 255] });
+    if (authored.render("png").byteLength === 0) throw new Error("Imperative API returned an empty render");
+    authored.undo();
+    if (authored.manifest.layers.length !== 0) throw new Error("Undo did not restore the document");
+    authored.redo();
+    const reopened = await GraphicsDocument.open(authored.exportKgfx());
+    if (reopened.manifest.layers.length !== 1) throw new Error("Exported document did not reopen correctly");
+    reopened.close();
+    authored.close();
+
+    const commandStyle = await GraphicsDocument.create({ width: 8, height: 8 });
+    const equivalenceOps = await fetch("/api-equivalence.ops.json").then((response) => response.json()) as Command[];
+    commandStyle.execute(equivalenceOps);
+    const imperativeStyle = await GraphicsDocument.create({ width: 8, height: 8 });
+    imperativeStyle.updateCanvas({ dpi: 144, color: [1, 2, 3, 4] });
+    imperativeStyle.extensions.set("com.layeredgraphics.equivalence", { ok: true });
+    imperativeStyle.layers.add({ id: "fill", name: "Fill", type: "fill", width: 4, height: 4, color: [9, 8, 7, 255], transform: { x: 1, y: 2, scaleX: 1, scaleY: 1 } });
+    const graphicalState = (document: GraphicsDocument) => ({ canvas: document.manifest.canvas, layers: document.manifest.layers, extensions: document.manifest.extensions });
+    if (JSON.stringify(graphicalState(commandStyle)) !== JSON.stringify(graphicalState(imperativeStyle))) throw new Error("Command and imperative APIs diverged");
+    try {
+      commandStyle.execute(equivalenceOps[2]!);
+      throw new Error("Duplicate layer unexpectedly succeeded");
+    } catch (error) {
+      if (!(error instanceof CommandExecutionError) || error.commandIndex !== 0 || error.code !== "command.invalid") throw error;
+    }
+    const linkedResponse = await fetch("/readme-banner.png");
+    const linkedBuffer = await linkedResponse.arrayBuffer();
+    const linkedBytes = new Uint8Array(linkedBuffer);
+    const linkedHash = [...new Uint8Array(await crypto.subtle.digest("SHA-256", linkedBytes))]
+      .map((value) => value.toString(16).padStart(2, "0")).join("");
+    const linked = await GraphicsDocument.create({ width: 16, height: 16 });
+    linked.assets.link({ id: "linked-banner", mediaType: "image/png", reference: "memory://shared-fixture", byteLength: linkedBytes.byteLength, sha256: linkedHash });
+    linked.provideLinkedAsset("linked-banner", linkedBytes);
+    linked.layers.add({ id: "linked-layer", type: "image", assetId: "linked-banner" });
+    if (!linked.render("png").byteLength) throw new Error("Browser linked asset did not resolve and render");
+    linked.close();
+    commandStyle.close();
+    imperativeStyle.close();
     if (status) status.textContent = "Rendered successfully in this browser.";
     root?.setAttribute("data-proof-state", "ready");
+    root?.setAttribute("data-authoring-proof", "ready");
+
+    const workerRoot = document.querySelector<HTMLElement>(".worker-proof");
+    const canvas = workerRoot?.querySelector<HTMLCanvasElement>("canvas");
+    if (!workerRoot || !canvas) throw new Error("Worker preview canvas is missing");
+    const workerFactory = () => new Worker(new URL("../workers/render.worker.ts", import.meta.url), { type: "module" });
+    const session = await BrowserRenderSession.create(workerFactory, { width: 320, height: 120, canvas });
+    const workerOps: Command[] = [
+      { op: "layerAdd", layer: { id: "background", name: "Background", type: "fill", width: 320, height: 120, color: [13, 18, 32, 255], visible: true, opacity: 1, blendMode: "normal", transform: { x: 0, y: 0, scaleX: 1, scaleY: 1 } } },
+      { op: "layerAdd", layer: { id: "accent", name: "Accent", type: "fill", width: 120, height: 50, color: [52, 225, 197, 255], visible: true, opacity: .9, blendMode: "normal", transform: { x: 36, y: 35, scaleX: 1, scaleY: 1 } } },
+    ];
+    await session.execute(workerOps, "Build worker preview");
+    let mainThreadAdvanced = false;
+    const interactivePromise = session.preview("interactive", { includePixels: false });
+    await new Promise<void>((resolve) => requestAnimationFrame(() => { mainThreadAdvanced = true; resolve(); }));
+    await interactivePromise;
+    if (!mainThreadAdvanced) throw new Error("Worker preview blocked the main thread");
+    await session.preview("refined", { includePixels: false });
+    const refined = await session.preview("refined", { includePixels: true });
+    const cold = await GraphicsDocument.create({ width: 320, height: 120 });
+    cold.execute(workerOps);
+    const expected = cold.renderRgba({ sampling: "smooth" });
+    if (!refined.pixels || refined.pixels.length !== expected.data.length || refined.pixels.some((value, index) => value !== expected.data[index])) throw new Error("Retained output differs from a cold authoritative render");
+    cold.close();
+    await session.execute({ op: "layerUpdate", id: "accent", set: { x: 48 } }, "Move accent");
+    const moved = await session.preview("refined", { includePixels: false });
+    if (moved.metrics.dirtyRegions.length !== 2 || !moved.metrics.invalidationReasons.includes("layerTransformChanged")) throw new Error("Transform invalidation did not contain old and new bounds");
+    const viewport = await session.preview("interactive", { includePixels: true, viewport: { x: 0, y: 0, width: 80, height: 40, zoom: 2 } });
+    if (viewport.width !== 160 || viewport.height !== 80) throw new Error("Viewport preview dimensions are incorrect");
+    const zoomedOut = await session.preview("preview", { includePixels: true, viewport: { x: 0, y: 0, width: 80, height: 40, zoom: .5 } });
+    if (zoomedOut.width !== 40 || zoomedOut.height !== 20) throw new Error("Zoomed-out viewport dimensions are incorrect");
+    let progress = 0;
+    const batch = await session.batch([
+      { commands: { op: "layerUpdate", id: "accent", set: { opacity: .6 } }, format: "png", options: { scale: .5 } },
+      { commands: { op: "layerUpdate", id: "accent", set: { opacity: .7 } }, format: "webp", options: { scale: .5 } },
+      { commands: { op: "layerUpdate", id: "accent", set: { opacity: .8 } }, format: "png", options: { scale: .25 } },
+      { commands: { op: "layerUpdate", id: "accent", set: { opacity: .9 } }, format: "png", options: { scale: .25 } },
+    ], 2, (completed) => { progress = completed; });
+    if (batch.length !== 4 || progress !== 4 || batch.some((item) => !item.bytes?.byteLength)) throw new Error("Warm batch did not finish in stable order");
+    await session.simulateDeviceLoss();
+    await session.preview("preview", { includePixels: false });
+    let mainThreadLongTasks = 0;
+    const longTaskObserver = "PerformanceObserver" in window ? new PerformanceObserver((list) => { mainThreadLongTasks += list.getEntries().length; }) : undefined;
+    try { longTaskObserver?.observe({ type: "longtask" }); } catch { /* Long Tasks is optional. */ }
+    const interactiveSamples: number[] = [];
+    const previewSamples: number[] = [];
+    for (let index = 0; index < 12; index++) {
+      interactiveSamples.push((await session.preview("interactive", { includePixels: false })).metrics.totalMs);
+      previewSamples.push((await session.preview("preview", { includePixels: false })).metrics.totalMs);
+    }
+    const p95 = (values: number[]) => [...values].sort((a, b) => a - b)[Math.ceil(values.length * .95) - 1]!;
+    workerRoot.querySelector("output")!.textContent = `${refined.backend} · revision ${refined.revision} · ${refined.metrics.cacheHits} cache hits`;
+    workerRoot.dataset.workerProof = "ready";
+    workerRoot.dataset.incrementalProof = "ready";
+    workerRoot.dataset.batchProof = "ready";
+    workerRoot.dataset.equivalenceProof = "ready";
+    workerRoot.dataset.backend = refined.backend;
+    workerRoot.dataset.interactiveP95 = p95(interactiveSamples).toFixed(3);
+    workerRoot.dataset.previewP95 = p95(previewSamples).toFixed(3);
+    workerRoot.dataset.mainThreadLongTasks = String(mainThreadLongTasks);
+    longTaskObserver?.disconnect();
+    await session.close();
   } catch (error) {
     if (status) status.textContent = `Browser proof failed: ${error instanceof Error ? error.message : String(error)}`;
     root?.setAttribute("data-proof-state", "error");
@@ -50,6 +158,9 @@ import StarlightPage from "@astrojs/starlight/components/StarlightPage.astro";
 
 <style>
   .proof { padding: 1rem; border: 1px solid var(--sl-color-gray-5); border-radius: .75rem; background: var(--sl-color-gray-6); }
+  .worker-proof { display: grid; gap: .75rem; padding: 1rem; border: 1px solid var(--sl-color-gray-5); border-radius: .75rem; }
+  .worker-proof canvas { width: 100%; image-rendering: pixelated; border-radius: .4rem; }
+  .worker-proof output { color: var(--lg-cyan); }
   .status { margin-bottom: 1rem; color: var(--sl-color-gray-2); }
   [data-proof-state="ready"] .status { color: var(--lg-cyan); }
   [data-proof-state="error"] .status { color: #ff8b8b; }

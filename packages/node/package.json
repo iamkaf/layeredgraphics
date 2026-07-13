@@ -1,0 +1,31 @@
+{
+  "name": "@layered-graphics/node",
+  "version": "0.1.0-alpha.1",
+  "type": "commonjs",
+  "main": "sdk.cjs",
+  "types": "sdk.d.ts",
+  "exports": {
+    ".": { "types": "./sdk.d.ts", "require": "./sdk.cjs" },
+    "./native": { "types": "./index.d.ts", "require": "./index.js" }
+  },
+  "files": ["sdk.cjs", "sdk.d.ts", "index.js", "index.d.ts", "*.node", "npm"],
+  "scripts": {
+    "build": "napi build --platform --release --manifest-path ../../crates/lg-node/Cargo.toml --output-dir .",
+    "check": "cargo check --manifest-path ../../crates/lg-node/Cargo.toml",
+    "test": "pnpm build && node --test test/*.test.cjs"
+  },
+  "napi": {
+    "binaryName": "lg_node",
+    "targets": [
+      "x86_64-unknown-linux-gnu",
+      "x86_64-apple-darwin",
+      "x86_64-pc-windows-msvc"
+    ]
+  },
+  "dependencies": {
+    "@layered-graphics/core": "workspace:*"
+  },
+  "devDependencies": {
+    "@napi-rs/cli": "3.7.2"
+  }
+}

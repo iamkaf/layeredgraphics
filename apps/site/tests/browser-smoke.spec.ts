@@ -16,7 +16,22 @@ test("Rust/WASM opens and renders the same .kgfx document in a browser", async (
   await page.goto("/playground/");
   const proof = page.locator(".proof");
   await expect(proof).toHaveAttribute("data-proof-state", "ready", { timeout: 30_000 });
-  await expect(page.getByRole("status")).toHaveText("Rendered successfully in this browser.");
+  await expect(proof).toHaveAttribute("data-authoring-proof", "ready");
+  await expect(page.locator("[data-worker-proof]"))
+    .toHaveAttribute("data-worker-proof", "ready", { timeout: 30_000 });
+  await expect(page.locator("[data-incremental-proof]"))
+    .toHaveAttribute("data-incremental-proof", "ready");
+  await expect(page.locator("[data-batch-proof]"))
+    .toHaveAttribute("data-batch-proof", "ready");
+  await expect(page.locator("[data-equivalence-proof]"))
+    .toHaveAttribute("data-equivalence-proof", "ready");
+  const interactiveP95 = Number(await page.locator("[data-interactive-p95]").getAttribute("data-interactive-p95"));
+  const previewP95 = Number(await page.locator("[data-preview-p95]").getAttribute("data-preview-p95"));
+  expect(interactiveP95).toBeLessThanOrEqual(50);
+  expect(previewP95).toBeLessThanOrEqual(250);
+  expect(Number(await page.locator("[data-main-thread-long-tasks]").getAttribute("data-main-thread-long-tasks"))).toBe(0);
+  console.log(`browser preview budgets: interactive p95=${interactiveP95}ms, preview p95=${previewP95}ms`);
+  await expect(proof.getByRole("status")).toHaveText("Rendered successfully in this browser.");
   const banner = page.getByAltText("Banner rendered from the .kgfx document by WebAssembly");
   await expect(banner).toBeVisible();
   await expect(banner).toHaveJSProperty("naturalWidth", 1200);
@@ -28,6 +43,6 @@ test("Rust/WASM opens and renders the same .kgfx document in a browser", async (
     const hash = await crypto.subtle.digest("SHA-256", bytes);
     return [...new Uint8Array(hash)].map((value) => value.toString(16).padStart(2, "0")).join("");
   });
-  expect(digest).toBe("ad100bba1af34fc8d88e891b30f9425b8b032c7d018fa43ff30e773b006c1b1a");
+  expect(digest).toBe("7ed95e67ed629301e2992aa677a38e4027f4baae122985f8adf918395c92032f");
   expect(errors).toEqual([]);
 });

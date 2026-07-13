@@ -1,0 +1,8 @@
+{
+  "schemaVersion": 0,
+  "id": "historical-v0-fixture",
+  "canvas": { "w": 32, "h": 16 },
+  "layers": [],
+  "assets": {},
+  "extensions": { "com.layeredgraphics.fixture": { "preserved": true } }
+}

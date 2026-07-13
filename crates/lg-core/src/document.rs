@@ -1,17 +1,25 @@
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
 use std::collections::{BTreeMap, BTreeSet};
+use std::io::Cursor;
+use std::sync::Arc;
 
 pub const SCHEMA_VERSION: u32 = 1;
+pub const MAX_CANVAS_DIMENSION: u32 = 32_768;
+pub const MAX_CANVAS_PIXELS: u64 = 268_435_456;
+pub const MAX_LAYER_COUNT: usize = 10_000;
+pub const MAX_LAYER_DEPTH: usize = 128;
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct Document {
     pub manifest: Manifest,
     #[serde(skip)]
-    pub asset_bytes: BTreeMap<String, Vec<u8>>,
+    pub asset_bytes: BTreeMap<String, Arc<Vec<u8>>>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct Manifest {
     pub schema_version: u32,
@@ -26,20 +34,22 @@ pub struct Manifest {
     pub extensions: BTreeMap<String, serde_json::Value>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct Canvas {
     pub width: u32,
     pub height: u32,
     #[serde(default = "default_dpi")]
     pub dpi: f32,
+    #[serde(default)]
+    pub color: Rgba,
 }
 
 fn default_dpi() -> f32 {
     72.0
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct Asset {
     pub id: String,
@@ -49,16 +59,18 @@ pub struct Asset {
     pub source: AssetSource,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub original_name: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub author: Option<serde_json::Value>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema, PartialEq)]
 #[serde(tag = "type", rename_all = "camelCase")]
 pub enum AssetSource {
     Embedded { path: String },
     Linked { reference: String },
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct Layer {
     #[serde(flatten)]
@@ -67,9 +79,10 @@ pub struct Layer {
     pub kind: LayerKind,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct LayerCommon {
+    #[serde(default)]
     pub id: String,
     pub name: String,
     #[serde(default = "default_true")]
@@ -90,10 +103,11 @@ fn default_opacity() -> f32 {
     1.0
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-#[serde(tag = "type", rename_all = "camelCase")]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema, PartialEq)]
+#[serde(tag = "type", rename_all = "camelCase", rename_all_fields = "camelCase")]
 pub enum LayerKind {
     Image {
+        #[serde(alias = "asset_id")]
         asset_id: String,
     },
     Fill {
@@ -103,7 +117,9 @@ pub enum LayerKind {
     },
     Text {
         text: String,
+        #[serde(alias = "font_asset_id")]
         font_asset_id: String,
+        #[serde(alias = "font_size")]
         font_size: f32,
         color: Rgba,
     },
@@ -113,7 +129,7 @@ pub enum LayerKind {
     },
 }
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Default)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, JsonSchema, PartialEq, Eq, Default)]
 #[serde(rename_all = "camelCase")]
 pub enum BlendMode {
     #[default]
@@ -121,7 +137,7 @@ pub enum BlendMode {
     Multiply,
 }
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, JsonSchema, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct Transform {
     #[serde(default)]
@@ -149,10 +165,10 @@ fn default_scale() -> f32 {
     1.0
 }
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, Default, Serialize, Deserialize, JsonSchema, PartialEq, Eq)]
 pub struct Rgba(pub u8, pub u8, pub u8, pub u8);
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct ValidationDiagnostic {
     pub severity: ValidationSeverity,
@@ -161,11 +177,25 @@ pub struct ValidationDiagnostic {
     pub path: String,
 }
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, JsonSchema, PartialEq, Eq)]
 #[serde(rename_all = "lowercase")]
 pub enum ValidationSeverity {
     Error,
     Warning,
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum AssetResolveError {
+    #[error("linked asset '{id}' could not be resolved from '{reference}': {message}")]
+    Resolver {
+        id: String,
+        reference: String,
+        message: String,
+    },
+    #[error("linked asset '{id}' has {actual} bytes, expected {expected}")]
+    Length { id: String, expected: u64, actual: u64 },
+    #[error("linked asset '{id}' integrity check failed")]
+    Integrity { id: String },
 }
 
 impl Document {
@@ -175,7 +205,12 @@ impl Document {
                 schema_version: SCHEMA_VERSION,
                 id: uuid::Uuid::new_v4().to_string(),
                 revision: 0,
-                canvas: Canvas { width, height, dpi },
+                canvas: Canvas {
+                    width,
+                    height,
+                    dpi,
+                    color: Rgba::default(),
+                },
                 layers: Vec::new(),
                 assets: BTreeMap::new(),
                 extensions: BTreeMap::new(),
@@ -200,6 +235,16 @@ impl Document {
                 "canvas",
             ));
         }
+        if self.manifest.canvas.width > MAX_CANVAS_DIMENSION
+            || self.manifest.canvas.height > MAX_CANVAS_DIMENSION
+            || self.manifest.canvas.width as u64 * self.manifest.canvas.height as u64 > MAX_CANVAS_PIXELS
+        {
+            out.push(error(
+                "canvas.resourceLimit",
+                "Canvas dimensions exceed the supported resource limit",
+                "canvas",
+            ));
+        }
         if !self.manifest.canvas.dpi.is_finite() || self.manifest.canvas.dpi <= 0.0 {
             out.push(error(
                 "canvas.dpi",
@@ -209,7 +254,16 @@ impl Document {
         }
 
         let mut ids = BTreeSet::new();
-        validate_layers(&self.manifest.layers, "layers", self, &mut ids, &mut out);
+        let mut layer_count = 0;
+        validate_layers(
+            &self.manifest.layers,
+            "layers",
+            self,
+            &mut ids,
+            &mut out,
+            0,
+            &mut layer_count,
+        );
         for (id, asset) in &self.manifest.assets {
             if id != &asset.id {
                 out.push(error(
@@ -244,6 +298,78 @@ impl Document {
     pub fn find_layer_mut(&mut self, id: &str) -> Option<&mut Layer> {
         find_layer_mut(&mut self.manifest.layers, id)
     }
+
+    pub fn resolve_linked_assets(
+        &mut self,
+        mut resolver: impl FnMut(&str) -> Result<Vec<u8>, String>,
+    ) -> Result<usize, AssetResolveError> {
+        let linked = self
+            .manifest
+            .assets
+            .iter()
+            .filter_map(|(id, asset)| match &asset.source {
+                AssetSource::Linked { reference } => {
+                    Some((id.clone(), reference.clone(), asset.byte_length, asset.sha256.clone()))
+                }
+                AssetSource::Embedded { .. } => None,
+            })
+            .collect::<Vec<_>>();
+        let mut resolved = 0;
+        for (id, reference, expected_length, expected_sha) in linked {
+            let bytes = resolver(&reference).map_err(|message| AssetResolveError::Resolver {
+                id: id.clone(),
+                reference: reference.clone(),
+                message,
+            })?;
+            if bytes.len() as u64 != expected_length {
+                return Err(AssetResolveError::Length {
+                    id,
+                    expected: expected_length,
+                    actual: bytes.len() as u64,
+                });
+            }
+            if format!("{:x}", Sha256::digest(&bytes)) != expected_sha {
+                return Err(AssetResolveError::Integrity { id });
+            }
+            self.asset_bytes.insert(id, Arc::new(bytes));
+            resolved += 1;
+        }
+        Ok(resolved)
+    }
+
+    pub fn provide_linked_asset(&mut self, id: &str, bytes: Vec<u8>) -> Result<(), AssetResolveError> {
+        let asset = self
+            .manifest
+            .assets
+            .get(id)
+            .ok_or_else(|| AssetResolveError::Resolver {
+                id: id.to_owned(),
+                reference: String::new(),
+                message: "asset does not exist".to_owned(),
+            })?;
+        match &asset.source {
+            AssetSource::Linked { .. } => {}
+            AssetSource::Embedded { .. } => {
+                return Err(AssetResolveError::Resolver {
+                    id: id.to_owned(),
+                    reference: String::new(),
+                    message: "asset is embedded, not linked".to_owned(),
+                });
+            }
+        }
+        if bytes.len() as u64 != asset.byte_length {
+            return Err(AssetResolveError::Length {
+                id: id.to_owned(),
+                expected: asset.byte_length,
+                actual: bytes.len() as u64,
+            });
+        }
+        if format!("{:x}", Sha256::digest(&bytes)) != asset.sha256 {
+            return Err(AssetResolveError::Integrity { id: id.to_owned() });
+        }
+        self.asset_bytes.insert(id.to_owned(), Arc::new(bytes));
+        Ok(())
+    }
 }
 
 fn validate_layers(
@@ -252,8 +378,27 @@ fn validate_layers(
     doc: &Document,
     ids: &mut BTreeSet<String>,
     out: &mut Vec<ValidationDiagnostic>,
+    depth: usize,
+    layer_count: &mut usize,
 ) {
+    if depth > MAX_LAYER_DEPTH {
+        out.push(error(
+            "layer.depthLimit",
+            "Layer nesting exceeds the supported resource limit",
+            path,
+        ));
+        return;
+    }
     for (index, layer) in layers.iter().enumerate() {
+        *layer_count += 1;
+        if *layer_count > MAX_LAYER_COUNT {
+            out.push(error(
+                "layer.countLimit",
+                "Layer count exceeds the supported resource limit",
+                path,
+            ));
+            return;
+        }
         let at = format!("{path}.{index}");
         if !ids.insert(layer.common.id.clone()) {
             out.push(error(
@@ -299,7 +444,15 @@ fn validate_layers(
             LayerKind::Fill { width, height, .. } if *width == 0 || *height == 0 => {
                 out.push(error("fill.empty", "Fill dimensions must be greater than zero", at));
             }
-            LayerKind::Group { children } => validate_layers(children, &format!("{at}.children"), doc, ids, out),
+            LayerKind::Group { children } => validate_layers(
+                children,
+                &format!("{at}.children"),
+                doc,
+                ids,
+                out,
+                depth + 1,
+                layer_count,
+            ),
             _ => {}
         }
     }
@@ -322,6 +475,26 @@ fn error(code: impl Into<String>, message: impl Into<String>, path: impl Into<St
         message: message.into(),
         path: path.into(),
     }
+}
+
+pub(crate) fn decode_image_limited(bytes: &[u8]) -> image::ImageResult<image::DynamicImage> {
+    let mut reader = image::ImageReader::new(Cursor::new(bytes)).with_guessed_format()?;
+    reader.limits(image_limits());
+    reader.decode()
+}
+
+pub(crate) fn image_dimensions_limited(bytes: &[u8]) -> image::ImageResult<(u32, u32)> {
+    let mut reader = image::ImageReader::new(Cursor::new(bytes)).with_guessed_format()?;
+    reader.limits(image_limits());
+    reader.into_dimensions()
+}
+
+fn image_limits() -> image::Limits {
+    let mut limits = image::Limits::default();
+    limits.max_image_width = Some(MAX_CANVAS_DIMENSION);
+    limits.max_image_height = Some(MAX_CANVAS_DIMENSION);
+    limits.max_alloc = Some(512 * 1024 * 1024);
+    limits
 }
 
 pub(crate) fn find_layer<'a>(layers: &'a [Layer], id: &str) -> Option<&'a Layer> {

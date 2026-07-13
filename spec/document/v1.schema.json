@@ -1,0 +1,349 @@
+{
+  "$defs": {
+    "Asset": {
+      "properties": {
+        "author": true,
+        "byteLength": {
+          "format": "uint64",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "id": {
+          "type": "string"
+        },
+        "mediaType": {
+          "type": "string"
+        },
+        "originalName": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "sha256": {
+          "type": "string"
+        },
+        "source": {
+          "$ref": "#/$defs/AssetSource"
+        }
+      },
+      "required": [
+        "id",
+        "mediaType",
+        "byteLength",
+        "sha256",
+        "source"
+      ],
+      "type": "object"
+    },
+    "AssetSource": {
+      "oneOf": [
+        {
+          "properties": {
+            "path": {
+              "type": "string"
+            },
+            "type": {
+              "const": "embedded",
+              "type": "string"
+            }
+          },
+          "required": [
+            "type",
+            "path"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "reference": {
+              "type": "string"
+            },
+            "type": {
+              "const": "linked",
+              "type": "string"
+            }
+          },
+          "required": [
+            "type",
+            "reference"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "BlendMode": {
+      "enum": [
+        "normal",
+        "multiply"
+      ],
+      "type": "string"
+    },
+    "Canvas": {
+      "properties": {
+        "color": {
+          "$ref": "#/$defs/Rgba",
+          "default": [
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        "dpi": {
+          "default": 72.0,
+          "format": "float",
+          "type": "number"
+        },
+        "height": {
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "width": {
+          "format": "uint32",
+          "minimum": 0,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "width",
+        "height"
+      ],
+      "type": "object"
+    },
+    "Layer": {
+      "oneOf": [
+        {
+          "properties": {
+            "assetId": {
+              "type": "string"
+            },
+            "type": {
+              "const": "image",
+              "type": "string"
+            }
+          },
+          "required": [
+            "type",
+            "assetId"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "color": {
+              "$ref": "#/$defs/Rgba"
+            },
+            "height": {
+              "format": "uint32",
+              "minimum": 0,
+              "type": "integer"
+            },
+            "type": {
+              "const": "fill",
+              "type": "string"
+            },
+            "width": {
+              "format": "uint32",
+              "minimum": 0,
+              "type": "integer"
+            }
+          },
+          "required": [
+            "type",
+            "width",
+            "height",
+            "color"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "color": {
+              "$ref": "#/$defs/Rgba"
+            },
+            "fontAssetId": {
+              "type": "string"
+            },
+            "fontSize": {
+              "format": "float",
+              "type": "number"
+            },
+            "text": {
+              "type": "string"
+            },
+            "type": {
+              "const": "text",
+              "type": "string"
+            }
+          },
+          "required": [
+            "type",
+            "text",
+            "fontAssetId",
+            "fontSize",
+            "color"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "children": {
+              "default": [],
+              "items": {
+                "$ref": "#/$defs/Layer"
+              },
+              "type": "array"
+            },
+            "type": {
+              "const": "group",
+              "type": "string"
+            }
+          },
+          "required": [
+            "type"
+          ],
+          "type": "object"
+        }
+      ],
+      "properties": {
+        "blendMode": {
+          "$ref": "#/$defs/BlendMode",
+          "default": "normal"
+        },
+        "id": {
+          "default": "",
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "opacity": {
+          "default": 1.0,
+          "format": "float",
+          "type": "number"
+        },
+        "transform": {
+          "$ref": "#/$defs/Transform",
+          "default": {
+            "scaleX": 1.0,
+            "scaleY": 1.0,
+            "x": 0.0,
+            "y": 0.0
+          }
+        },
+        "visible": {
+          "default": true,
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "type": "object"
+    },
+    "Rgba": {
+      "maxItems": 4,
+      "minItems": 4,
+      "prefixItems": [
+        {
+          "format": "uint8",
+          "maximum": 255,
+          "minimum": 0,
+          "type": "integer"
+        },
+        {
+          "format": "uint8",
+          "maximum": 255,
+          "minimum": 0,
+          "type": "integer"
+        },
+        {
+          "format": "uint8",
+          "maximum": 255,
+          "minimum": 0,
+          "type": "integer"
+        },
+        {
+          "format": "uint8",
+          "maximum": 255,
+          "minimum": 0,
+          "type": "integer"
+        }
+      ],
+      "type": "array"
+    },
+    "Transform": {
+      "properties": {
+        "scaleX": {
+          "default": 1.0,
+          "format": "float",
+          "type": "number"
+        },
+        "scaleY": {
+          "default": 1.0,
+          "format": "float",
+          "type": "number"
+        },
+        "x": {
+          "default": 0.0,
+          "format": "float",
+          "type": "number"
+        },
+        "y": {
+          "default": 0.0,
+          "format": "float",
+          "type": "number"
+        }
+      },
+      "type": "object"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "assets": {
+      "additionalProperties": {
+        "$ref": "#/$defs/Asset"
+      },
+      "default": {},
+      "type": "object"
+    },
+    "canvas": {
+      "$ref": "#/$defs/Canvas"
+    },
+    "extensions": {
+      "additionalProperties": true,
+      "default": {},
+      "type": "object"
+    },
+    "id": {
+      "type": "string"
+    },
+    "layers": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/Layer"
+      },
+      "type": "array"
+    },
+    "revision": {
+      "format": "uint64",
+      "minimum": 0,
+      "type": "integer"
+    },
+    "schemaVersion": {
+      "format": "uint32",
+      "minimum": 0,
+      "type": "integer"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "id",
+    "revision",
+    "canvas"
+  ],
+  "title": "Manifest",
+  "type": "object"
+}

@@ -15,12 +15,16 @@ export default defineConfig({
         { label: "Start", items: [
           { label: "Introduction", link: "/docs/" },
           { label: "CLI quickstart", link: "/docs/cli/" },
-          { label: "Browser smoke test", link: "/playground/" },
+          { label: "Browser preview", link: "/docs/browser/" },
+          { label: "Live rendering proof", link: "/playground/" },
         ] },
         { label: "Concepts", items: [{ autogenerate: { directory: "docs/concepts" } }] },
         { label: "Project", items: [
           { label: "Roadmap", link: "/docs/project/roadmap/" },
           { label: "Technology stack", link: "/docs/project/technology/" },
+          { label: "Runtime support", link: "/docs/project/support/" },
+          { label: "Benchmarks", link: "/docs/project/benchmarks/" },
+          { label: "Phase 1/2 audit", link: "/docs/project/audit/" },
         ] },
       ],
     }),

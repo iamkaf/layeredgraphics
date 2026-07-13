@@ -14,6 +14,7 @@ base64.workspace = true
 clap.workspace = true
 lg-core = { path = "../lg-core" }
 serde_json.workspace = true
+sha2.workspace = true
 uuid.workspace = true
 
 [dev-dependencies]

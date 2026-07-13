@@ -6,6 +6,7 @@
     "build": "pnpm -r build",
     "check": "cargo check --workspace && pnpm -r check",
     "test": "cargo test --workspace && pnpm -r test",
+    "benchmark": "./scripts/run-benchmarks.sh --output /tmp/layered-graphics-benchmarks.json && node scripts/check-benchmarks.mjs /tmp/layered-graphics-benchmarks.json benchmarks/results-browser-chromium149.json",
     "site:dev": "pnpm --filter @layered-graphics/site dev",
     "site:build": "pnpm --filter @layered-graphics/site build"
   }

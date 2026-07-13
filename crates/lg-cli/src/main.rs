@@ -2,13 +2,16 @@ use anyhow::{Context, Result, anyhow, bail};
 use base64::Engine;
 use clap::{Args, Parser, Subcommand, ValueEnum};
 use lg_core::{
-    BlendMode, Command, Document, Layer, LayerCommon, LayerKind, LayerPatch, RenderOptions, Rgba, Transform,
-    execute_commands, load_kgfx, render_document_png, save_kgfx,
+    BlendMode, Command, Document, Layer, LayerCommon, LayerKind, LayerPatch, OutputFormat, RenderOptions,
+    RetainedRenderer, Rgba, Sampling, Transform, command_schema, diff_documents, document_schema, execute_commands,
+    inspect_document, load_kgfx, render_document_encoded, save_kgfx,
 };
 use serde_json::{Value, json};
+use sha2::{Digest, Sha256};
 use std::fs;
 use std::io::{self, Read};
 use std::path::{Path, PathBuf};
+use std::time::{Duration, SystemTime};
 
 #[derive(Parser)]
 #[command(name = "lg", version, about = "Headless layered graphics authoring")]
@@ -29,9 +32,16 @@ enum TopCommand {
         #[command(subcommand)]
         command: AssetCommand,
     },
+    Extension {
+        #[command(subcommand)]
+        command: ExtensionCommand,
+    },
     Render(RenderArgs),
     Inspect(InspectArgs),
     Validate(ValidateArgs),
+    Diff(DiffArgs),
+    Watch(WatchArgs),
+    Schema(SchemaArgs),
 }
 
 #[derive(Args)]
@@ -77,6 +87,21 @@ enum LayerType {
 enum BlendArg {
     Normal,
     Multiply,
+}
+
+#[derive(Clone, Copy, ValueEnum)]
+enum SamplingArg {
+    Nearest,
+    Smooth,
+}
+
+impl From<SamplingArg> for Sampling {
+    fn from(value: SamplingArg) -> Self {
+        match value {
+            SamplingArg::Nearest => Sampling::Nearest,
+            SamplingArg::Smooth => Sampling::Smooth,
+        }
+    }
 }
 
 impl From<BlendArg> for BlendMode {
@@ -175,6 +200,7 @@ struct LayerMoveArgs {
 #[derive(Subcommand)]
 enum AssetCommand {
     Add(AssetAddArgs),
+    Relink(AssetRelinkArgs),
     Ls(AssetListArgs),
     Rm(AssetRemoveArgs),
 }
@@ -187,6 +213,21 @@ struct AssetAddArgs {
     id: String,
     #[arg(long)]
     media_type: Option<String>,
+    #[arg(long)]
+    linked: bool,
+    #[arg(long)]
+    reference: Option<String>,
+    #[arg(long)]
+    json: bool,
+}
+
+#[derive(Args)]
+struct AssetRelinkArgs {
+    file: PathBuf,
+    id: String,
+    source: PathBuf,
+    #[arg(long)]
+    reference: Option<String>,
     #[arg(long)]
     json: bool,
 }
@@ -206,6 +247,37 @@ struct AssetRemoveArgs {
     json: bool,
 }
 
+#[derive(Subcommand)]
+enum ExtensionCommand {
+    Set(ExtensionSetArgs),
+    Rm(ExtensionRemoveArgs),
+    Ls(ExtensionListArgs),
+}
+
+#[derive(Args)]
+struct ExtensionSetArgs {
+    file: PathBuf,
+    namespace: String,
+    value: String,
+    #[arg(long)]
+    json: bool,
+}
+
+#[derive(Args)]
+struct ExtensionRemoveArgs {
+    file: PathBuf,
+    namespace: String,
+    #[arg(long)]
+    json: bool,
+}
+
+#[derive(Args)]
+struct ExtensionListArgs {
+    file: PathBuf,
+    #[arg(long)]
+    json: bool,
+}
+
 #[derive(Args)]
 struct RenderArgs {
     file: PathBuf,
@@ -217,6 +289,10 @@ struct RenderArgs {
     layer: Option<String>,
     #[arg(long, default_value_t = 1.0)]
     scale: f32,
+    #[arg(long, value_enum, default_value_t = SamplingArg::Nearest)]
+    sampling: SamplingArg,
+    #[arg(long)]
+    background: Option<String>,
     #[arg(long)]
     json: bool,
 }
@@ -227,6 +303,8 @@ struct InspectArgs {
     #[arg(long)]
     path: Option<String>,
     #[arg(long)]
+    pixels: bool,
+    #[arg(long)]
     json: bool,
 }
 
@@ -235,6 +313,41 @@ struct ValidateArgs {
     file: String,
     #[arg(long)]
     json: bool,
+}
+
+#[derive(Args)]
+struct DiffArgs {
+    source: PathBuf,
+    target: PathBuf,
+    #[arg(short, long)]
+    output: Option<PathBuf>,
+}
+
+#[derive(Args)]
+struct WatchArgs {
+    file: PathBuf,
+    #[arg(long)]
+    ops: PathBuf,
+    #[arg(long = "render")]
+    output: PathBuf,
+    #[arg(long, default_value_t = 200)]
+    interval_ms: u64,
+    #[arg(long, hide = true)]
+    once: bool,
+}
+
+#[derive(Clone, Copy, ValueEnum)]
+enum SchemaKind {
+    Document,
+    Commands,
+}
+
+#[derive(Args)]
+struct SchemaArgs {
+    #[arg(value_enum)]
+    kind: SchemaKind,
+    #[arg(short, long)]
+    output: Option<PathBuf>,
 }
 
 fn main() {
@@ -274,12 +387,27 @@ fn run() -> Result<()> {
         },
         TopCommand::Asset { command } => match command {
             AssetCommand::Add(args) => asset_add(args),
+            AssetCommand::Relink(args) => asset_relink(args),
             AssetCommand::Ls(args) => asset_list(args),
             AssetCommand::Rm(args) => mutate(args.file, vec![Command::AssetRemove { id: args.id }], args.json),
+        },
+        TopCommand::Extension { command } => match command {
+            ExtensionCommand::Set(args) => extension_set(args),
+            ExtensionCommand::Rm(args) => mutate(
+                args.file,
+                vec![Command::ExtensionRemove {
+                    namespace: args.namespace,
+                }],
+                args.json,
+            ),
+            ExtensionCommand::Ls(args) => extension_list(args),
         },
         TopCommand::Render(args) => render(args),
         TopCommand::Inspect(args) => inspect(args),
         TopCommand::Validate(args) => validate(args),
+        TopCommand::Diff(args) => diff(args),
+        TopCommand::Watch(args) => watch(args),
+        TopCommand::Schema(args) => schema(args),
     }
 }
 
@@ -304,12 +432,7 @@ fn create_document(args: NewArgs) -> Result<()> {
 
 fn exec(args: ExecArgs) -> Result<()> {
     let text = read_text_input(&args.ops)?;
-    let value: Value = serde_json::from_str(&text).context("operations are not valid JSON")?;
-    let commands: Vec<Command> = if value.is_array() {
-        serde_json::from_value(value).context("invalid operation array")?
-    } else {
-        vec![serde_json::from_value(value).context("invalid operation")?]
-    };
+    let commands = parse_commands(&text)?;
     mutate(args.file, commands, args.json)
 }
 
@@ -381,16 +504,69 @@ fn asset_add(args: AssetAddArgs) -> Result<()> {
     let media_type = args
         .media_type
         .unwrap_or_else(|| media_type_for(&args.source).to_owned());
-    let command = Command::AssetAdd {
-        id: args.id,
-        media_type,
-        bytes_base64: base64::engine::general_purpose::STANDARD.encode(bytes),
-        original_name: args
-            .source
-            .file_name()
-            .map(|value| value.to_string_lossy().into_owned()),
+    let original_name = args
+        .source
+        .file_name()
+        .map(|value| value.to_string_lossy().into_owned());
+    let command = if args.linked {
+        Command::AssetLink {
+            id: args.id,
+            media_type,
+            reference: args
+                .reference
+                .unwrap_or_else(|| args.source.to_string_lossy().into_owned()),
+            byte_length: bytes.len() as u64,
+            sha256: format!("{:x}", Sha256::digest(&bytes)),
+            original_name,
+            author: None,
+        }
+    } else {
+        Command::AssetAdd {
+            id: args.id,
+            media_type,
+            bytes_base64: base64::engine::general_purpose::STANDARD.encode(bytes),
+            original_name,
+            author: None,
+        }
     };
     mutate(args.file, vec![command], args.json)
+}
+
+fn asset_relink(args: AssetRelinkArgs) -> Result<()> {
+    let bytes = fs::read(&args.source).with_context(|| format!("cannot read {}", args.source.display()))?;
+    let command = Command::AssetRelink {
+        id: args.id,
+        reference: args
+            .reference
+            .unwrap_or_else(|| args.source.to_string_lossy().into_owned()),
+        byte_length: bytes.len() as u64,
+        sha256: format!("{:x}", Sha256::digest(&bytes)),
+    };
+    mutate(args.file, vec![command], args.json)
+}
+
+fn extension_set(args: ExtensionSetArgs) -> Result<()> {
+    let value: Value = serde_json::from_str(&args.value).context("extension value must be valid JSON")?;
+    mutate(
+        args.file,
+        vec![Command::ExtensionSet {
+            namespace: args.namespace,
+            value,
+        }],
+        args.json,
+    )
+}
+
+fn extension_list(args: ExtensionListArgs) -> Result<()> {
+    let doc = load_kgfx(&args.file)?;
+    if args.json {
+        println!("{}", serde_json::to_string_pretty(&doc.manifest.extensions)?);
+    } else {
+        for namespace in doc.manifest.extensions.keys() {
+            println!("{namespace}");
+        }
+    }
+    Ok(())
 }
 
 fn mutate(file: PathBuf, commands: Vec<Command>, json_output: bool) -> Result<()> {
@@ -456,27 +632,39 @@ fn asset_list(args: AssetListArgs) -> Result<()> {
 }
 
 fn render(args: RenderArgs) -> Result<()> {
-    if !args.format.eq_ignore_ascii_case("png") {
-        bail!("milestone 1 supports only --format png");
-    }
-    let doc = load_kgfx(&args.file)?;
-    let png = render_document_png(
+    let format = match args.format.to_ascii_lowercase().as_str() {
+        "png" => OutputFormat::Png,
+        "jpg" | "jpeg" => OutputFormat::Jpeg,
+        "webp" => OutputFormat::Webp,
+        _ => bail!("format must be png, jpg, jpeg, or webp"),
+    };
+    let mut doc = load_kgfx(&args.file)?;
+    resolve_cli_links(&mut doc, &args.file)?;
+    let background = match args.background {
+        Some(value) => Some(parse_color(&value)?),
+        None if format == OutputFormat::Jpeg => Some(Rgba(255, 255, 255, 255)),
+        None => None,
+    };
+    let encoded = render_document_encoded(
         &doc,
         &RenderOptions {
             layer_id: args.layer,
             scale: args.scale,
+            sampling: args.sampling.into(),
+            background,
         },
+        format,
     )?;
-    safe_write(&args.output, &png)?;
+    safe_write(&args.output, &encoded)?;
     if args.json {
         println!(
             "{}",
             serde_json::to_string_pretty(
-                &json!({ "output": args.output, "bytes": png.len(), "revision": doc.manifest.revision })
+                &json!({ "output": args.output, "format": args.format, "bytes": encoded.len(), "revision": doc.manifest.revision })
             )?
         );
     } else {
-        println!("rendered {} ({} bytes)", args.output.display(), png.len());
+        println!("rendered {} ({} bytes)", args.output.display(), encoded.len());
     }
     Ok(())
 }
@@ -486,6 +674,10 @@ fn inspect(args: InspectArgs) -> Result<()> {
     let diagnostics = doc.validate();
     let mut value = serde_json::to_value(&doc.manifest)?;
     if let Value::Object(object) = &mut value {
+        object.insert(
+            "inspection".to_owned(),
+            serde_json::to_value(inspect_document(&doc, args.pixels))?,
+        );
         object.insert(
             "summary".to_owned(),
             json!({
@@ -519,7 +711,10 @@ fn validate(args: ValidateArgs) -> Result<()> {
         let text = read_text_input(&args.file)?;
         let value: Value = serde_json::from_str(&text).context("input is not valid JSON")?;
         if value.is_array() {
-            let _: Vec<Command> = serde_json::from_value(value).context("invalid operation array")?;
+            let commands: Vec<Command> = serde_json::from_value(value).context("invalid operation array")?;
+            if commands.len() > 10_000 {
+                bail!("operation array exceeds the 10,000-command resource limit");
+            }
         } else {
             let _: Command = serde_json::from_value(value).context("invalid operation")?;
         }
@@ -541,6 +736,119 @@ fn validate(args: ValidateArgs) -> Result<()> {
         }
         bail!("validation failed with {} diagnostic(s)", diagnostics.len());
     }
+    Ok(())
+}
+
+fn diff(args: DiffArgs) -> Result<()> {
+    let source = load_kgfx(&args.source)?;
+    let target = load_kgfx(&args.target)?;
+    let commands = diff_documents(&source, &target);
+    let bytes = serde_json::to_vec_pretty(&commands)?;
+    if let Some(path) = args.output {
+        safe_write(&path, &bytes)?;
+    } else {
+        println!("{}", String::from_utf8(bytes).expect("JSON is UTF-8"));
+    }
+    Ok(())
+}
+
+fn schema(args: SchemaArgs) -> Result<()> {
+    let value = match args.kind {
+        SchemaKind::Document => serde_json::to_value(document_schema())?,
+        SchemaKind::Commands => serde_json::to_value(command_schema())?,
+    };
+    let bytes = serde_json::to_vec_pretty(&value)?;
+    if let Some(path) = args.output {
+        safe_write(&path, &bytes)?;
+    } else {
+        println!("{}", String::from_utf8(bytes).expect("JSON Schema is UTF-8"));
+    }
+    Ok(())
+}
+
+fn watch(args: WatchArgs) -> Result<()> {
+    let interval = Duration::from_millis(args.interval_ms.max(25));
+    let mut previous = None;
+    let mut base: Option<((SystemTime, u64), Document)> = None;
+    let mut renderer = RetainedRenderer::default();
+    loop {
+        let stamp = (file_stamp(&args.file)?, file_stamp(&args.ops)?);
+        if previous.as_ref() != Some(&stamp) {
+            if base.as_ref().map(|(source_stamp, _)| source_stamp) != Some(&stamp.0) {
+                let mut document = load_kgfx(&args.file)?;
+                resolve_cli_links(&mut document, &args.file)?;
+                renderer.clear();
+                base = Some((stamp.0, document));
+            }
+            let mut doc = base.as_ref().expect("base document was loaded").1.clone();
+            let commands = parse_commands(&fs::read_to_string(&args.ops)?)?;
+            let changes = execute_commands(&mut doc, &commands)?;
+            renderer.invalidate(&doc, &changes);
+            let format = output_format_for_path(&args.output)?;
+            let background = (format == OutputFormat::Jpeg).then_some(Rgba(255, 255, 255, 255));
+            let bytes = renderer.render_encoded(
+                &doc,
+                &RenderOptions {
+                    background,
+                    ..RenderOptions::default()
+                },
+                format,
+            )?;
+            safe_write(&args.output, &bytes)?;
+            println!(
+                "rendered revision {} to {}",
+                doc.manifest.revision,
+                args.output.display()
+            );
+            previous = Some(stamp);
+        }
+        if args.once {
+            return Ok(());
+        }
+        std::thread::sleep(interval);
+    }
+}
+
+fn parse_commands(text: &str) -> Result<Vec<Command>> {
+    let value: Value = serde_json::from_str(text).context("operations are not valid JSON")?;
+    if value.is_array() {
+        serde_json::from_value(value).context("invalid operation array")
+    } else {
+        Ok(vec![serde_json::from_value(value).context("invalid operation")?])
+    }
+}
+
+fn file_stamp(path: &Path) -> Result<(SystemTime, u64)> {
+    let metadata = fs::metadata(path).with_context(|| format!("cannot inspect {}", path.display()))?;
+    Ok((metadata.modified()?, metadata.len()))
+}
+
+fn output_format_for_path(path: &Path) -> Result<OutputFormat> {
+    match path
+        .extension()
+        .and_then(|value| value.to_str())
+        .unwrap_or("")
+        .to_ascii_lowercase()
+        .as_str()
+    {
+        "png" => Ok(OutputFormat::Png),
+        "jpg" | "jpeg" => Ok(OutputFormat::Jpeg),
+        "webp" => Ok(OutputFormat::Webp),
+        _ => bail!("output extension must be png, jpg, jpeg, or webp"),
+    }
+}
+
+fn resolve_cli_links(doc: &mut Document, document_path: &Path) -> Result<()> {
+    let base = document_path.parent().unwrap_or_else(|| Path::new("."));
+    doc.resolve_linked_assets(|reference| {
+        let path = Path::new(reference);
+        let path = if path.is_absolute() {
+            path.to_path_buf()
+        } else {
+            base.join(path)
+        };
+        fs::read(&path).map_err(|error| format!("{}: {error}", path.display()))
+    })?;
     Ok(())
 }
 

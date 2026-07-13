@@ -5,7 +5,7 @@ description: Headless Photoshop-like graphics authoring for applications, script
 
 Layered Graphics is a FOSS, browser-first engine for creating and editing portable layered graphics without adopting a prescribed editor interface.
 
-> **Milestone status:** The engine currently implements the first executable vertical slice: `.kgfx` documents, embedded assets, basic image/fill/text/group layers, validated commands, a native CLI, authoritative PNG output, and browser rendering through Rust/WASM.
+> **Status:** Phases 1 and 2 are complete: executable `.kgfx` documents, command/history/inspection APIs, embedded and linked assets, native CLI/Node, PNG/JPEG/WebP exports, and worker-owned retained previews with WebGPU/Canvas2D presentation.
 
 ## Build the project banner
 
@@ -21,4 +21,6 @@ This produces an editable document and PNG using only public CLI operations, val
 
 - Continue with the [CLI quickstart](/docs/cli/).
 - Learn about [documents and commands](/docs/concepts/documents/).
-- Run the [browser rendering proof](/playground/).
+- Build a [worker-backed browser preview](/docs/browser/).
+- Review the [benchmark method and initial budgets](/docs/project/benchmarks/).
+- Run the [live rendering proof](/playground/).

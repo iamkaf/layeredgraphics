@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "coordinateTolerancePixels": 0,
+  "features": {
+    "layerOrder": { "maxChannelDelta": 0 },
+    "transformBounds": { "maxChannelDelta": 1 },
+    "straightAlphaNormal": { "maxChannelDelta": 1 },
+    "straightAlphaMultiply": { "maxChannelDelta": 1 },
+    "isolatedGroupSource": { "maxChannelDelta": 1 },
+    "nearestSampling": { "maxChannelDelta": 0 },
+    "smoothSampling": { "maxChannelDelta": 2 }
+  },
+  "qualityTiers": {
+    "interactive": { "resolutionScale": 0.5, "sampling": "nearest" },
+    "preview": { "resolutionScale": 1, "sampling": "smooth" },
+    "refined": { "resolutionScale": 1, "sampling": "smooth" },
+    "authoritative": { "backend": "rust-reference", "maxChannelDelta": 0 }
+  }
+}

@@ -6,9 +6,9 @@ Layered Graphics is a FOSS, browser-first graphics engine for embedding Photosho
 
 The project is headless by design. It provides a portable layered document, compositing and editing semantics, fast previews, high-quality exports, automation APIs, a CLI, and an unstyled editor toolkit. Applications remain in control of their interface and product-specific concepts.
 
-> Project status: Milestone 1 implemented. The public API and `.kgfx` format are usable experimental contracts and are not yet stable.
+> Project status: Phases 1 and 2 implemented. The executable document, native/browser APIs, retained worker previews and benchmarked rendering contracts are usable but remain experimental until stable v1.
 
-## Try the first milestone
+## Try the executable engine and browser preview
 
 Requirements: a current Rust toolchain, Node.js, pnpm, `wasm32-unknown-unknown`, and `wasm-bindgen-cli` 0.2.126.
 
@@ -18,9 +18,10 @@ cargo install wasm-bindgen-cli --version 0.2.126 --locked
 pnpm install
 ./examples/readme-banner/build.sh
 pnpm test
+pnpm benchmark
 ```
 
-The banner workflow creates an icon and editable banner through public `lg` commands, embeds its image and font assets, validates and inspects the document, renders the PNG, checks the approved fixture, and publishes the result to the landing site. The browser test then opens the same `.kgfx` document and renders it through Rust/WASM.
+The banner workflow creates an icon and editable banner through public `lg` commands, embeds its image and font assets, validates and inspects the document, renders the PNG, checks the approved fixture, and publishes the result to the landing site. Browser tests then exercise the same document through Rust/WASM plus a retained module-worker preview with WebGPU/Canvas2D presentation.
 
 ## Why Layered Graphics?
 
@@ -69,10 +70,10 @@ Consumers can use the document and renderer alone, add automation, or build a fu
 
 Layered Graphics is developed as one monorepo containing the engine, runtime bindings, CLI, JavaScript packages, editor toolkit, examples, specifications, and tests.
 
-- **Rust** owns the canonical document engine, command reducer, asset/container handling, authoritative CPU renderer, native Node bindings, and native `lg` CLI. The engine, CLI, and browser/WASM path are implemented in Milestone 1; native Node packaging follows.
+- **Rust** owns the canonical document engine, command reducer, history, asset/container handling, retained and authoritative CPU renderers, native Node bindings, and native `lg` CLI.
 - **WebAssembly** brings the Rust engine and authoritative renderer to browsers and provides the portable execution path for JavaScript runtimes.
-- **TypeScript** owns the public JavaScript SDK, worker protocol, imperative API, editor toolkit, and optional framework bindings. Milestone 1 exposes browser validation, inspection, and rendering over WASM.
-- **WebGPU** will power retained interactive previews beginning in Phase 2. The current browser proof uses authoritative CPU/WASM rendering.
+- **TypeScript** owns the public JavaScript SDK, command-compiling imperative helpers, worker protocol/session, lifecycle recovery and optional future editor bindings.
+- **WebGPU** composites retained top-level layer textures and directly presents worker preview frames when available. Canvas2D presents authoritative retained Rust/WASM pixels as fallback. Neither normal preview path uses encoded images.
 - **Cargo workspaces and pnpm workspaces** manage the Rust and TypeScript portions of the repository.
 - **Astro and Starlight** power the landing and documentation site as a statically deployable monorepo application.
 
@@ -147,7 +148,7 @@ A `.kgfx` file is portable and self-contained by default. It contains a versione
 The core model includes:
 
 - Canvas dimensions, DPI, and color settings
-- Stable layer, mask, and asset identifiers
+- Stable layer and asset identifiers, with extension points for later masks
 - A hierarchical layer tree
 - Layer properties and non-destructive operations
 - Embedded or linked assets
@@ -208,7 +209,7 @@ The implementation will use incremental invalidation, cached intermediate result
 
 ## Roadmap
 
-Development is divided into five phases:
+Development is divided into five phases. Phases 1 and 2 are complete:
 
 1. Executable document and CLI foundation
 2. Browser preview and rendering performance
@@ -217,6 +218,8 @@ Development is divided into five phases:
 5. Spriteform integration and production hardening
 
 See [ROADMAP.md](ROADMAP.md) for the high-level sequence, [Technology Stack](docs/TECH_STACK.md) for implementation choices, and the [phase plans](docs/plans/) for detailed scope and acceptance criteria. The [Website and Documentation Plan](docs/plans/06-website-documentation.md) runs across every implementation phase.
+
+See the [Phase 1/2 completion audit](docs/PHASES_1_2_AUDIT.md), [browser rendering guide](docs/BROWSER_RENDERING.md), [runtime support](docs/API_SUPPORT.md), and [benchmark results](docs/BENCHMARKS.md) for the implemented contracts and evidence.
 
 ## Contributing
 

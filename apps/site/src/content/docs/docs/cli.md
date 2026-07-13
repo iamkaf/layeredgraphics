@@ -34,7 +34,19 @@ Inspect, validate, and render:
 lg layer ls banner.kgfx
 lg inspect banner.kgfx --json
 lg validate banner.kgfx
-lg render banner.kgfx -o banner.png
+lg render banner.kgfx -o banner.png --format png --sampling smooth
 ```
 
 Use `lg exec file.kgfx ops.json` or pipe an operation array to `lg exec file.kgfx -` for atomic machine-authored transactions.
+
+Linked assets, extensions, diffs and retained watch workflows are also available:
+
+```bash
+lg asset add banner.kgfx --id workspace-hero ./hero.png --linked --reference assets://hero
+lg asset relink banner.kgfx workspace-hero ./updated.png --reference assets://hero-v2
+lg extension set banner.kgfx com.example.spriteform '{"variant":"night"}'
+lg diff original.kgfx banner.kgfx > changes.ops.json
+lg watch banner.kgfx --ops changes.ops.json --render preview.webp
+```
+
+`lg inspect --pixels` opts into visible-content analysis. `lg schema document` and `lg schema commands` emit the generated contracts. `lg validate` accepts both `.kgfx` and standalone operation JSON.

@@ -37,7 +37,7 @@ crates/
 packages/
   core/                 TypeScript command types and SDK entry point
   node/                 Node SDK and native package loader
-  worker/               browser worker client and host
+  browser/              browser worker client/host, preview presenter and retained-session policy
   editor/               framework-neutral editor toolkit
   react/                optional React bindings
 
@@ -122,9 +122,9 @@ Rasterization, text, image decoding, and color libraries are selected behind int
 
 ### Preview rendering
 
-The preview renderer uses WebGPU, implemented through `wgpu` where it allows useful code and shader sharing without compromising browser integration. It consumes the same render graph and changesets as the authoritative renderer.
+The preview path uses the browser WebGPU API for top-level retained-texture composition and direct worker-canvas presentation. Its WGSL mirrors reference straight-alpha normal/multiply equations; isolated group sources and authoritative/raw output remain Rust-composited. A future `wgpu` render graph remains an option when Phase 3 primitives justify wider shader sharing.
 
-Preview rendering may reduce resolution or approximate documented effects according to an explicit quality tier. It must preserve structural behavior such as coordinates, ordering, clipping relationships, and transaction revisions.
+Preview rendering may reduce resolution or approximate documented effects according to an explicit quality tier. Current approximations are half-resolution interactive rendering and nearest viewport scaling. Structural behavior and refined raw pixels retain reference semantics.
 
 ### Fallback
 

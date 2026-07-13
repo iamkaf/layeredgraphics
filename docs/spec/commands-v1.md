@@ -1,29 +1,23 @@
 # Command protocol v1 experimental contract
 
-Status: implemented experimental contract. Commands use camel-case JSON and execute as atomic arrays through `lg exec` and the Rust API.
+Status: implemented experimental contract. Commands use camel-case JSON and execute as atomic arrays through Rust, JavaScript, worker/native bindings and `lg exec`. The generated normative schema is [`spec/commands/v1.schema.json`](../../spec/commands/v1.schema.json).
 
-## Envelope
-
-Every command has an `op` discriminator:
+## Envelope and transaction behavior
 
 ```json
 [
-  { "op": "documentUpdate", "dpi": 144 },
+  { "op": "documentUpdate", "dpi": 144, "color": [0, 0, 0, 0] },
   { "op": "layerUpdate", "id": "hero", "set": { "opacity": 0.7 } }
 ]
 ```
 
-`lg exec file.kgfx ops.json` accepts one command or an array. `-` reads standard input. An array increments the document revision once if every command succeeds and the resulting document validates.
+`lg exec file.kgfx ops.json` accepts one command or an array. `-` reads standard input. The whole array validates against a clone and commits once; failure leaves state and revision unchanged. A nonempty successful array increments revision exactly once.
 
-## Document update
+## Command families
 
-```json
-{ "op": "documentUpdate", "width": 1200, "height": 630, "dpi": 144 }
-```
+`documentUpdate` accepts optional `width`, `height`, `dpi` and initial `color`.
 
-Every field is optional, but supplied values must produce a valid canvas.
-
-## Layer add
+`layerAdd` carries a flattened image, fill, text or group layer plus optional `parentId` and `index`. Layer arrays are bottom-to-top; an omitted index appends at the top. An omitted/empty layer ID is replaced with a UUID and returned in `changedLayers`.
 
 ```json
 {
@@ -39,84 +33,53 @@ Every field is optional, but supplied values must produce a valid canvas.
     "width": 1200,
     "height": 630,
     "color": [9, 13, 24, 255]
-  },
-  "parentId": null,
-  "index": 0
-}
-```
-
-`parentId` targets a group. An omitted index appends the layer at the top of the destination stack.
-
-## Layer update
-
-```json
-{
-  "op": "layerUpdate",
-  "id": "hero",
-  "set": {
-    "name": "Hero image",
-    "visible": true,
-    "opacity": 0.7,
-    "blendMode": "multiply",
-    "x": 80,
-    "y": 40,
-    "scaleX": 1.25,
-    "scaleY": 1.25
   }
 }
 ```
 
-Kind-specific properties include `assetId`, `text`, `fontAssetId`, `fontSize`, `color`, `width`, and `height`. Supplying a property incompatible with the target layer kind rejects the transaction.
+`layerUpdate` patches common properties and compatible kind properties. `layerRemove` removes a subtree. `layerMove` targets an optional group and exactly one of `to`, `above` or `below`; no position moves to the top.
 
-## Layer remove
-
-```json
-{ "op": "layerRemove", "id": "hero" }
-```
-
-Removing a group removes its subtree.
-
-## Layer move
-
-```json
-{ "op": "layerMove", "id": "hero", "parentId": null, "above": "background" }
-```
-
-Use exactly one of `to`, `above`, or `below`. If none is supplied, the layer moves to the top of the destination. Reference IDs must be direct children of that destination.
-
-## Asset add
+`assetAdd` carries `id`, `mediaType`, base64 bytes and optional `originalName`/structured `author`. Re-adding an ID replaces it. Distinct IDs with identical bytes remain logical aliases while the archive writes one content-addressed payload. `assetRemove` fails final validation while referenced.
 
 ```json
 {
-  "op": "assetAdd",
+  "op": "assetLink",
   "id": "hero-image",
   "mediaType": "image/png",
-  "bytesBase64": "…",
-  "originalName": "hero.png"
+  "reference": "workspace://images/hero",
+  "byteLength": 2049,
+  "sha256": "…"
 }
 ```
 
-The reducer computes content integrity metadata. The CLI's `asset add` command reads raw file bytes and constructs this operation.
+Linked references are opaque. Hosts supply bytes and the engine verifies length/integrity. `assetRelink` changes reference, length and hash while retaining the ID.
 
-## Asset remove
+`extensionSet` and `extensionRemove` address reverse-domain namespaces such as `com.example.spriteform`. Values are arbitrary JSON; unknown namespaces round-trip.
 
-```json
-{ "op": "assetRemove", "id": "hero-image" }
-```
-
-Removing an asset still referenced by a layer causes final transaction validation to fail, leaving the document unchanged.
-
-## Result
-
-Successful execution returns:
+## Result, invalidation and errors
 
 ```json
 {
+  "fromRevision": 3,
   "revision": 4,
-  "applied": 2,
+  "applied": 1,
   "changedLayers": ["hero"],
-  "changedAssets": []
+  "changedAssets": [],
+  "changes": [{
+    "impact": "localPixels",
+    "reason": "layerTransformChanged",
+    "fullRender": false,
+    "layerIds": ["hero"],
+    "assetIds": [],
+    "regions": [
+      { "x": 80, "y": 40, "width": 320, "height": 200 },
+      { "x": 120, "y": 40, "width": 320, "height": 200 }
+    ]
+  }],
+  "warnings": []
 }
 ```
 
-Errors identify the zero-based failing command or final validation failure. CLI machine output is written to standard output and diagnostics to standard error.
+Impacts are `metadata`, `localPixels`, `composite`, `asset` and `global`. Transform changes carry old/new bounds. Errors identify the zero-based command (`command N: …`) or final validation. CLI JSON stays on stdout and diagnostics use stderr; runtime failures exit 1 and syntax/usage failures exit 2.
+
+History records successful transaction boundaries and labels. Undo/redo restore snapshots. `lg diff` emits a valid supported-state transform; `lg watch` reapplies operations to a canonical base while retaining render sources.

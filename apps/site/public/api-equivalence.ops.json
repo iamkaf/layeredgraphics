@@ -1,0 +1,19 @@
+[
+  { "op": "documentUpdate", "dpi": 144, "color": [1, 2, 3, 4] },
+  { "op": "extensionSet", "namespace": "com.layeredgraphics.equivalence", "value": { "ok": true } },
+  {
+    "op": "layerAdd",
+    "layer": {
+      "id": "fill",
+      "name": "Fill",
+      "visible": true,
+      "opacity": 1,
+      "blendMode": "normal",
+      "transform": { "x": 1, "y": 2, "scaleX": 1, "scaleY": 1 },
+      "type": "fill",
+      "width": 4,
+      "height": 4,
+      "color": [9, 8, 7, 255]
+    }
+  }
+]
