@@ -542,7 +542,7 @@ fn apply(
             let bytes = base64::engine::general_purpose::STANDARD
                 .decode(bytes_base64)
                 .map_err(|error| format!("invalid base64 asset bytes: {error}"))?;
-            let sha = format!("{:x}", Sha256::digest(&bytes));
+            let sha = hex::encode(Sha256::digest(&bytes));
             let asset = Asset {
                 id: id.clone(),
                 media_type: media_type.clone(),

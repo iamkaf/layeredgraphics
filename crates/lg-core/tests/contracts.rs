@@ -311,7 +311,7 @@ fn linked_asset_resolution_checks_length_and_integrity() {
             media_type: "application/octet-stream".to_owned(),
             reference: "workspace://linked".to_owned(),
             byte_length: bytes.len() as u64,
-            sha256: format!("{:x}", Sha256::digest(bytes)),
+            sha256: hex::encode(Sha256::digest(bytes)),
             original_name: None,
             author: None,
         }],

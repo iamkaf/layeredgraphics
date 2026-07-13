@@ -12,6 +12,12 @@ This work starts from `.kgfx` schema v1, stable layer/asset IDs, atomic commands
 
 Each slice must extend the existing schema and reducer, `lg` commands, TypeScript facade, Rust/WASM/Node bindings, inspection, history/diff behavior, retained invalidation, authoritative renderer, preview declaration, and public documentation together.
 
+## Milestone 2 boundary
+
+The first two delivery slices form [Milestone 2: template-driven artwork](../MILESTONE_2.md). They prioritize the smallest coherent primitive set needed by form-driven graphics authoring applications: shapes, paths, strokes, gradients, production text, rectangular clipping, image fit/tile helpers, rotation, and PNG/SVG export.
+
+Milestone 2 does not pull selections, painting, filters, direct-manipulation controllers, or application-specific template semantics forward. Its purpose is to prove that a structured recipe can compile into an editable portable composition without flattening or maintaining a second renderer.
+
 ## User outcomes
 
 When this plan is complete:
@@ -197,8 +203,8 @@ Inspection results distinguish guaranteed facts from pixel-derived estimates.
 
 The sequence builds on the shipped renderer instead of opening parallel speculative subsystems.
 
-1. **Compositing contract** — group isolation/pass-through, expanded blend equations, raster masks, clipping chains, effect bounds, and combination fixtures.
-2. **Editable vector sources** — rounded rectangles, ellipses, paths, strokes, gradients, richer font assets, and paragraph layout.
+1. **Milestone 2 compositing contract** — group isolation, rectangular clipping for cover placement, deterministic image contain/cover/tile helpers, rotation, and combination fixtures. Broader raster masks, pass-through behavior, clipping chains, and blend equations may follow after the milestone-critical subset.
+2. **Milestone 2 editable vector sources** — rounded rectangles, ellipses, paths, strokes, gradients, production font assets, deterministic text layout, SVG export, and the public template-driven reference workflow.
 3. **Bounded effects** — blur, sharpen, levels, curves, brightness/contrast, and hue/saturation across masks, clipping, groups, preview tiers, and invalidation.
 4. **Selection channels** — transient/named storage, boolean combination, feather/grow/shrink, inspection, and deterministic command capture.
 5. **Raster mutation** — brush/erase streams, fill, clipboard operations, crop/trim/resize/rasterize, compact deltas, and selection-aware replay.

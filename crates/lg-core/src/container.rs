@@ -73,7 +73,7 @@ fn load_archive<R: Read + Seek>(reader: R) -> Result<Document, KgfxError> {
             }
             let mut bytes = Vec::with_capacity(entry.size() as usize);
             entry.read_to_end(&mut bytes)?;
-            let actual = format!("{:x}", Sha256::digest(&bytes));
+            let actual = hex::encode(Sha256::digest(&bytes));
             if actual != asset.sha256 {
                 return Err(KgfxError::Invalid(format!("integrity check failed for asset '{id}'")));
             }

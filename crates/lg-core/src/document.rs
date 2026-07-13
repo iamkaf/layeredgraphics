@@ -328,7 +328,7 @@ impl Document {
                     actual: bytes.len() as u64,
                 });
             }
-            if format!("{:x}", Sha256::digest(&bytes)) != expected_sha {
+            if hex::encode(Sha256::digest(&bytes)) != expected_sha {
                 return Err(AssetResolveError::Integrity { id });
             }
             self.asset_bytes.insert(id, Arc::new(bytes));
@@ -364,7 +364,7 @@ impl Document {
                 actual: bytes.len() as u64,
             });
         }
-        if format!("{:x}", Sha256::digest(&bytes)) != asset.sha256 {
+        if hex::encode(Sha256::digest(&bytes)) != asset.sha256 {
             return Err(AssetResolveError::Integrity { id: id.to_owned() });
         }
         self.asset_bytes.insert(id.to_owned(), Arc::new(bytes));
