@@ -21,6 +21,7 @@ jobs:
     outputs:
       version: ${{ steps.release.outputs.version }}
       tag: ${{ steps.release.outputs.tag }}
+      sha: ${{ steps.release.outputs.sha }}
       prerelease: ${{ steps.release.outputs.prerelease }}
       npm_tag: ${{ steps.release.outputs.npm_tag }}
     steps:
@@ -31,6 +32,7 @@ jobs:
         env:
           REQUESTED_VERSION: ${{ inputs.version }}
         run: |
+          test "$GITHUB_REF" = "refs/heads/main" || { echo "Publish release must be dispatched from main" >&2; exit 1; }
           version=$(node -p 'require("./package.json").version')
           test "$version" = "$REQUESTED_VERSION" || { echo "main is $version, not $REQUESTED_VERSION" >&2; exit 1; }
           node scripts/prepare-release.mjs check
@@ -44,6 +46,7 @@ jobs:
           fi
           echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "tag=v$version" >> "$GITHUB_OUTPUT"
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
           echo "prerelease=$prerelease" >> "$GITHUB_OUTPUT"
           echo "npm_tag=$npm_tag" >> "$GITHUB_OUTPUT"
 
@@ -204,9 +207,10 @@ jobs:
           TAG: ${{ needs.metadata.outputs.tag }}
           VERSION: ${{ needs.metadata.outputs.version }}
           PRERELEASE: ${{ needs.metadata.outputs.prerelease }}
+          RELEASE_SHA: ${{ needs.metadata.outputs.sha }}
         run: |
           if ! gh release view "$TAG" >/dev/null 2>&1; then
-            gh release create "$TAG" --target "$GITHUB_SHA" --draft --title "Layered Graphics $VERSION" --generate-notes
+            gh release create "$TAG" --target "$RELEASE_SHA" --draft --title "Layered Graphics $VERSION" --generate-notes
           fi
           (cd release && find . -type f ! -name SHA256SUMS -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS)
           mapfile -d '' files < <(find release -type f -print0)
