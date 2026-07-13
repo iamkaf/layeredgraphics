@@ -1,6 +1,12 @@
 {
   "name": "@layered-graphics/browser",
   "version": "0.1.0-alpha.1",
+  "description": "Worker-owned retained browser previews for Layered Graphics.",
+  "license": "MIT",
+  "repository": { "type": "git", "url": "git+https://github.com/iamkaf/layeredgraphics.git", "directory": "packages/browser" },
+  "homepage": "https://iamkaf.github.io/layeredgraphics/",
+  "keywords": ["graphics", "webgpu", "worker", "wasm", "canvas"],
+  "publishConfig": { "access": "public" },
   "type": "module",
   "files": ["dist"],
   "exports": {

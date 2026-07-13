@@ -1,6 +1,6 @@
 # Browser rendering sessions
 
-Phase 2 keeps canonical document execution and rendering coordination in a module worker. `BrowserRenderSession` is the main-thread proxy; `RenderWorkerHost` owns a `GraphicsDocument`, Rust `RetainedRenderer`, optional `PreviewPresenter`, cancellation state and idle-refinement scheduling.
+The browser runtime keeps canonical document execution and rendering coordination in a module worker. `BrowserRenderSession` is the main-thread proxy; `RenderWorkerHost` owns a `GraphicsDocument`, Rust `RetainedRenderer`, optional `PreviewPresenter`, cancellation state and idle-refinement scheduling.
 
 ```ts
 import { BrowserRenderSession, moduleWorkerFactory } from "@layered-graphics/browser";

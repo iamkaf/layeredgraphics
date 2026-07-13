@@ -1,6 +1,9 @@
 {
   "name": "layered-graphics-monorepo",
   "private": true,
+  "description": "Headless graphics authoring for applications, scripts, browsers, and agents.",
+  "license": "MIT",
+  "repository": "github:iamkaf/layeredgraphics",
   "packageManager": "pnpm@11.5.2",
   "scripts": {
     "build": "pnpm -r build",

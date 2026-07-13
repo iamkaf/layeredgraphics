@@ -3,6 +3,8 @@ name = "lg-cli"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
+repository.workspace = true
+description = "Native command-line authoring interface for Layered Graphics documents"
 
 [[bin]]
 name = "lg"
@@ -12,7 +14,7 @@ path = "src/main.rs"
 anyhow.workspace = true
 base64.workspace = true
 clap.workspace = true
-lg-core = { path = "../lg-core" }
+lg-core = { version = "0.1.0-alpha.1", path = "../lg-core" }
 serde_json.workspace = true
 sha2.workspace = true
 uuid.workspace = true

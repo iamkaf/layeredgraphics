@@ -22,4 +22,4 @@ The transferred canvas presents through WebGPU when supported and Canvas2D other
 
 Quality intents are `interactive`, `preview`, `refined`, and `authoritative`. Newer queued previews supersede old ones, idle input schedules refinement, and every frame reports timing, dirty reasons, cache activity and memory estimates. Viewports, cancellation, warm bounded batches and canonical-snapshot worker recovery are part of the session API.
 
-[Open the executable preview proof](/playground/) or read the repository's [full rendering contract](https://github.com/iamkaf/layeredgraphics/blob/main/docs/BROWSER_RENDERING.md).
+[Open the executable preview proof](../../playground/) or read the repository's [full rendering contract](https://github.com/iamkaf/layeredgraphics/blob/main/docs/BROWSER_RENDERING.md).

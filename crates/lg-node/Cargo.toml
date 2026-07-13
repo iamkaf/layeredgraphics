@@ -3,16 +3,17 @@ name = "lg-node"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
+repository.workspace = true
+description = "Native Node.js bindings for the Layered Graphics engine"
 
 [lib]
 crate-type = ["cdylib"]
 
 [dependencies]
-lg-core = { path = "../lg-core" }
+lg-core = { version = "0.1.0-alpha.1", path = "../lg-core" }
 napi.workspace = true
 napi-derive.workspace = true
 serde_json.workspace = true
 
 [build-dependencies]
 napi-build.workspace = true
-

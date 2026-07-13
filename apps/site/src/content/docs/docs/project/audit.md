@@ -1,8 +1,8 @@
 ---
-title: Phase 1/2 audit
-description: Requirement-by-requirement completion evidence.
+title: Foundation evidence
+description: Requirement-by-requirement evidence for the document and browser foundations.
 ---
 
-Every Phase 1 and Phase 2 exit criterion maps to executable evidence: schemas and migrations, atomic history/diffs, browser/Node equivalence, hostile fixtures, authoritative formats, worker lifecycle, exact retained/cold comparison, invalidation, GPU fallback/loss, bounded batches and numeric benchmark budgets.
+Every completed foundation criterion maps to executable evidence: schemas and migrations, atomic history/diffs, browser/Node equivalence, hostile fixtures, authoritative formats, worker lifecycle, exact retained/cold comparison, invalidation, GPU fallback/loss, bounded batches and numeric benchmark budgets.
 
-Read the repository's [complete evidence audit](https://github.com/iamkaf/layeredgraphics/blob/main/docs/PHASES_1_2_AUDIT.md).
+Read the repository's [complete evidence audit](https://github.com/iamkaf/layeredgraphics/blob/main/docs/FOUNDATION_AUDIT.md).

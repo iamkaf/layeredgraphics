@@ -2,7 +2,8 @@ import { defineConfig } from "astro/config";
 import starlight from "@astrojs/starlight";
 
 export default defineConfig({
-  site: "https://layered.graphics",
+  site: "https://iamkaf.github.io",
+  base: "/layeredgraphics",
   integrations: [
     starlight({
       title: "Layered Graphics",
@@ -24,7 +25,7 @@ export default defineConfig({
           { label: "Technology stack", link: "/docs/project/technology/" },
           { label: "Runtime support", link: "/docs/project/support/" },
           { label: "Benchmarks", link: "/docs/project/benchmarks/" },
-          { label: "Phase 1/2 audit", link: "/docs/project/audit/" },
+          { label: "Foundation evidence", link: "/docs/project/audit/" },
         ] },
       ],
     }),

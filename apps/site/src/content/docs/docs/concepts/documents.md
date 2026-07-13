@@ -5,7 +5,7 @@ description: Canonical state, embedded assets, and atomic operations.
 
 A `.kgfx` file contains a versioned JSON manifest and content-addressed embedded assets. Image and font layers refer to stable asset IDs rather than filesystem paths.
 
-Every mutation is a command. CLI subcommands and the future imperative SDK compile to the same command protocol, so user gestures, scripts, and agents cannot create competing document behavior.
+Every mutation is a command. CLI subcommands and the imperative SDK compile to the same command protocol, so user gestures, scripts, and agents cannot create competing document behavior.
 
 ```json
 [

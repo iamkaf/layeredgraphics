@@ -1,6 +1,12 @@
 {
   "name": "@layered-graphics/core",
   "version": "0.1.0-alpha.1",
+  "description": "Portable WebAssembly document and rendering API for Layered Graphics.",
+  "license": "MIT",
+  "repository": { "type": "git", "url": "git+https://github.com/iamkaf/layeredgraphics.git", "directory": "packages/core" },
+  "homepage": "https://iamkaf.github.io/layeredgraphics/",
+  "keywords": ["graphics", "image", "layers", "wasm", "canvas"],
+  "publishConfig": { "access": "public" },
   "type": "module",
   "files": ["dist"],
   "exports": {

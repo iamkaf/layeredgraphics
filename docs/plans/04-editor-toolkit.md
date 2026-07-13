@@ -1,10 +1,16 @@
-# Phase 4: Headless Editor Toolkit
+# Headless editor toolkit plan
 
 ## Objective
 
 Provide reusable authoring behavior that lets an application build a credible browser editor without adopting a prescribed interface, component library, or application state model.
 
 The toolkit translates user intent into document commands and presentation overlays. It does not become a second document engine.
+
+## Starting baseline and dependency
+
+The browser runtime already owns documents in a module worker, exposes retained previews and invalidation metrics, recovers from worker/device loss, and supports atomic history. The toolkit consumes those APIs; it does not introduce another render session or state store.
+
+Implementation begins after transform, selection, paint, bounds, and snapping query contracts are stable. Viewport and input normalization may be prototyped earlier, but public controllers target shipped commands rather than speculative operations.
 
 ## Success criterion
 
@@ -104,7 +110,7 @@ Provide configurable candidates for:
 
 Snapping output includes the chosen candidates and visual guide geometry. Applications decide how to draw the feedback.
 
-Alignment and distribution actions use the Phase 3 helpers and produce ordinary transform commands.
+Alignment and distribution actions use the graphics-plan helpers and produce ordinary transform commands.
 
 ### Tool controller model
 
@@ -267,7 +273,7 @@ The example editor demonstrates accessible integration rather than claiming acce
 
 ## Exit criteria
 
-Phase 4 is complete when:
+This plan is complete when:
 
 - The documented afternoon editor can be built using only public packages.
 - Core tools support commit, cancel, undo, redo, and worker-backed previews.

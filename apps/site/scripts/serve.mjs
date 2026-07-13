@@ -19,7 +19,9 @@ const types = {
 createServer(async (request, response) => {
   try {
     const pathname = decodeURIComponent(new URL(request.url ?? "/", "http://localhost").pathname);
-    const relative = normalize(pathname).replace(/^[/\\]+/, "");
+    let relative = normalize(pathname).replace(/^[/\\]+/, "");
+    if (relative === "layeredgraphics") relative = "";
+    if (relative.startsWith("layeredgraphics/")) relative = relative.slice("layeredgraphics/".length);
     let file = join(root, relative);
     if (!file.startsWith(root)) throw new Error("unsafe path");
     const info = await stat(file).catch(() => undefined);

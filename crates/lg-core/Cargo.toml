@@ -3,6 +3,8 @@ name = "lg-core"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
+repository.workspace = true
+description = "Canonical document, command, container, inspection, and rendering engine for Layered Graphics"
 
 [dependencies]
 base64.workspace = true

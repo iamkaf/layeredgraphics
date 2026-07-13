@@ -1,4 +1,4 @@
-# Benchmark methodology and initial results
+# Benchmark methodology and checked results
 
 Run the release corpus with:
 
@@ -7,7 +7,7 @@ Run the release corpus with:
 pnpm benchmark
 ```
 
-The runner covers Phase 1 open/save, shallow/deep command execution and sprite/2K/4K reference rendering. Phase 2 adds sprite, 2K, 4K and deep retained sessions plus a 32-output shared-image batch. It records sample count, median, p95, throughput, peak resident memory and retained-cache behavior. `pnpm benchmark` writes a temporary result and applies `benchmarks/budgets.json`.
+The runner covers open/save, shallow/deep command execution, sprite/2K/4K reference rendering, retained sessions, and a 32-output shared-image batch. It records sample count, median, p95, throughput, peak resident memory and retained-cache behavior. `pnpm benchmark` writes a temporary result and applies `benchmarks/budgets.json`.
 
 The checked baselines are `benchmarks/results-linux-ryzen7900x.json` and `benchmarks/results-browser-chromium149.json`: release build, AMD Ryzen 9 7900X (12 cores/24 threads), x86-64 Linux. The browser lifecycle suite used headless Chromium 149.0.7827.55 on the same host; WebGPU was unavailable in that headless run, so it exercised the Canvas2D fallback (interactive p95 1.3 ms; preview p95 2.0 ms across 12 warm samples each). Dedicated WebGPU composition/loss is shader-validated and covered with a deterministic device recreation test.
 

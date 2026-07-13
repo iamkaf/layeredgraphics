@@ -1,6 +1,6 @@
 # Runtime and package support
 
-Status: Phase 1/2 experimental prerelease contract.
+Status: experimental alpha contract.
 
 ## Packages
 

@@ -1,4 +1,4 @@
-# Phase 3: Photoshop-like Graphics Primitives
+# Graphics primitives plan
 
 ## Objective
 
@@ -6,9 +6,15 @@ Expand Layered Graphics from a basic layered renderer into a credible graphics-a
 
 This phase is defined by semantic coherence. A long feature list is not sufficient if masks, groups, clipping, selections, effects, and transforms interact inconsistently.
 
+## Starting baseline
+
+This work starts from `.kgfx` schema v1, stable layer/asset IDs, atomic commands and history, image/fill/bitmap-text/group layers, normal and multiply compositing, authoritative CPU export, retained worker previews, and cross-runtime conformance. These are extension points, not scaffolding to rebuild.
+
+Each slice must extend the existing schema and reducer, `lg` commands, TypeScript facade, Rust/WASM/Node bindings, inspection, history/diff behavior, retained invalidation, authoritative renderer, preview declaration, and public documentation together.
+
 ## User outcomes
 
-At the end of this phase:
+When this plan is complete:
 
 - An agent can create a polished banner using editable text, shapes, images, masks, adjustments, and effects.
 - A user can paint, select, mask, transform, and filter content without flattening the document by default.
@@ -187,16 +193,18 @@ Inspection results distinguish guaranteed facts from pixel-derived estimates.
 - Fully editable banner example demonstrating the phase
 - Primitive guides, compatibility notes, and generated command/API reference published on the site
 
-## Work streams
+## Delivery slices
 
-The phase can proceed in coordinated streams, but each stream must integrate with commands, persistence, inspection, rendering, history, and invalidation.
+The sequence builds on the shipped renderer instead of opening parallel speculative subsystems.
 
-1. Compositing hierarchy: groups, masks, clipping, and blend coverage
-2. Editable sources: text, fonts, shapes, paths, fills, and gradients
-3. Effects: adjustments, filters, effect bounds, and preview tiers
-4. Selection: channel representation, tools, refinement, and persistence
-5. Raster editing: brushes, fills, selection-aware mutations, and pixel history
-6. Design helpers: alignment, distribution, measurement, and snapping queries
+1. **Compositing contract** — group isolation/pass-through, expanded blend equations, raster masks, clipping chains, effect bounds, and combination fixtures.
+2. **Editable vector sources** — rounded rectangles, ellipses, paths, strokes, gradients, richer font assets, and paragraph layout.
+3. **Bounded effects** — blur, sharpen, levels, curves, brightness/contrast, and hue/saturation across masks, clipping, groups, preview tiers, and invalidation.
+4. **Selection channels** — transient/named storage, boolean combination, feather/grow/shrink, inspection, and deterministic command capture.
+5. **Raster mutation** — brush/erase streams, fill, clipboard operations, crop/trim/resize/rasterize, compact deltas, and selection-aware replay.
+6. **Design queries** — visible bounds, distances, align/distribute/fit helpers, snap candidates, and contrast diagnostics.
+
+Each slice ships a small editable example and benchmark. A slice is incomplete if it only renders or only persists.
 
 ## Testing strategy
 
@@ -242,7 +250,7 @@ Each primitive adds at least one benchmark or extends an existing mixed workload
 
 ## Exit criteria
 
-Phase 3 is complete when:
+This plan is complete when:
 
 - The editable banner workflow passes using public APIs and the CLI.
 - Supported Photoshop-like semantics are documented with combination fixtures.

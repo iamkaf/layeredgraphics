@@ -1,4 +1,4 @@
-# Phase 5: Spriteform Integration and Production Hardening
+# Spriteform integration and production hardening plan
 
 ## Objective
 
@@ -6,9 +6,15 @@ Prove Layered Graphics inside a real authoring application, complete the scripte
 
 Spriteform is the primary integration partner, not a source of application-specific features for the core engine.
 
+## Starting baseline
+
+The repository already has a native CLI, browser WASM and native Node surfaces, retained worker previews, linked/embedded assets, structured diagnostics, warm bounded batches, package splits, CI, and numeric performance budgets. Integration exercises and refines these surfaces instead of creating Spriteform-only equivalents.
+
+The adapter is the pressure test for graphics and editor-toolkit contracts. Generally useful behavior belongs behind a Layered Graphics command or controller; variant rules, generation recipes, and domain metadata remain in Spriteform.
+
 ## User outcomes
 
-At the end of this phase:
+When this plan is complete:
 
 - Spriteform authors receive fast interactive composition previews and authoritative exports from Layered Graphics.
 - Spriteform retains its smart-layer, variant, and turbo-generation workflows without duplicating graphics primitives.
@@ -241,7 +247,7 @@ Published results identify hardware, browser/runtime, document fixture, quality 
 
 ## Exit criteria
 
-Phase 5 is complete when:
+This plan is complete when:
 
 - README banner, thumbnail batch, and Spriteform workflows all pass end to end.
 - Spriteform uses Layered Graphics for supported preview and export paths with an exercised rollback plan.

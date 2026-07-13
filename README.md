@@ -1,89 +1,57 @@
 # Layered Graphics
 
-![Layered Graphics — headless graphics for every app](apps/site/public/readme-banner.png)
+![An editable Layered Graphics composition showing a stack of visual layers beside the words “A canvas for code”](apps/site/public/showcase.png)
 
-Layered Graphics is a FOSS, browser-first graphics engine for embedding Photoshop-like authoring into applications, scripts, and AI-agent workflows.
+Layered Graphics is an experimental, open-source engine for creating editable layered graphics from applications, browser workers, scripts, and AI agents. It provides a portable `.kgfx` document, one command model across runtimes, deterministic exports, and retained browser previews—without prescribing an editor UI.
 
-The project is headless by design. It provides a portable layered document, compositing and editing semantics, fast previews, high-quality exports, automation APIs, a CLI, and an unstyled editor toolkit. Applications remain in control of their interface and product-specific concepts.
+The current release can build, inspect, revise, diff, and render compositions made from images, bitmap text, solid fills, and groups. PNG, JPEG, and WebP export are supported. Masks, shapes, painting, selections, and effects are not implemented yet.
 
-> Project status: Phases 1 and 2 implemented. The executable document, native/browser APIs, retained worker previews and benchmarked rendering contracts are usable but remain experimental until stable v1.
+> Alpha software: document and command schemas are versioned, but the public API may change before v1.
 
-## Try the executable engine and browser preview
+## See it work
 
-Requirements: a current Rust toolchain, Node.js, pnpm, `wasm32-unknown-unknown`, and `wasm-bindgen-cli` 0.2.126.
+The image above is not a mockup. [`examples/showcase`](examples/showcase/) combines an original raster source with engine-authored fill, image, text, blend, transform, asset, and ordering operations, then exports the PNG and editable [`showcase.kgfx`](apps/site/public/showcase.kgfx).
 
 ```bash
 rustup target add wasm32-unknown-unknown
 cargo install wasm-bindgen-cli --version 0.2.126 --locked
+corepack enable
 pnpm install
-./examples/readme-banner/build.sh
+
+./examples/showcase/build.sh
 pnpm test
-pnpm benchmark
 ```
 
-The banner workflow creates an icon and editable banner through public `lg` commands, embeds its image and font assets, validates and inspects the document, renders the PNG, checks the approved fixture, and publishes the result to the landing site. Browser tests then exercise the same document through Rust/WASM plus a retained module-worker preview with WebGPU/Canvas2D presentation.
+Explore the [documentation](https://iamkaf.github.io/layeredgraphics/docs/), run the [in-browser rendering proof](https://iamkaf.github.io/layeredgraphics/playground/), or inspect the [benchmark results](docs/BENCHMARKS.md).
 
-## Why Layered Graphics?
+## What works today
 
-Most image libraries operate on a single pixel buffer. That works well for resize-and-export pipelines, but becomes awkward when a product needs editable layers, masks, selections, text, non-destructive effects, history, or interactive previews.
+| Area | Current capability |
+| --- | --- |
+| Documents | Versioned `.kgfx` ZIP container, stable IDs, embedded/linked assets, namespaced extensions, schema migration |
+| Editing | Atomic commands, transactions, changesets, undo/redo, supported-state diffing, imperative TypeScript helpers |
+| Layers | Raster images, solid fills, bitmap-font text, nested groups, visibility, opacity, transforms, normal/multiply blend |
+| Output | Authoritative PNG, JPEG, and WebP; nearest and smooth sampling; scaled and isolated-layer render |
+| Automation | Native `lg` CLI, Rust core, browser WASM API, native Node API, JSON inspection and diagnostics |
+| Browser | Module-worker sessions, retained sources, dirty-region reporting, quality tiers, cancellation, warm batches, WebGPU/Canvas2D presentation |
+| Robustness | Bounded container loading, hash validation, safe archive paths, atomic replacement, cross-runtime conformance tests |
 
-Full editor frameworks tend to impose their own interface and application model. Layered Graphics occupies the space between those approaches: a reusable graphics-authoring foundation that can live inside any application.
+```mermaid
+flowchart LR
+  A[App, script, or agent] --> C[Commands]
+  I[Imperative SDK] --> C
+  L[lg CLI] --> C
+  C --> D[Canonical Rust document]
+  D --> K[Editable .kgfx]
+  D --> R[Authoritative renderer]
+  D --> W[Retained browser worker]
+  R --> O[PNG · JPEG · WebP]
+  W --> P[WebGPU or Canvas2D preview]
+```
 
-The guiding questions are:
+## One document, one command language
 
-- What if an application could embed the useful parts of Photoshop without embedding a Photoshop-shaped UI?
-- What if an AI agent could build and revise a complete composition without a human opening an editor?
-- What if the same document and operations worked in a browser, a script, and a CLI?
-
-## Intended workflows
-
-Layered Graphics is designed around three initial end-to-end workflows.
-
-### Agent-authored graphics
-
-An agent can create a `.kgfx` document, add assets and layers, inspect its structure, render a preview, visually evaluate the result, revise it, and deliver both the editable document and exported image.
-
-One representative task is generating a polished banner for a project README from a prompt, supplied assets, shapes, and text.
-
-### Scripted image production
-
-A script can load a document or template, change assets and properties, and render many outputs efficiently. Thumbnail generation is the initial batch-rendering benchmark.
-
-### Embedded authoring
-
-Applications can build their own editor using the document engine and unstyled interaction toolkit. Spriteform is the first integration target: its smart layers, variants, and generated sprites remain application-level concepts that compile into ordinary graphical layers.
-
-## Product layers
-
-The project is organized as a set of adoptable layers:
-
-1. **Document and command model** — portable state, validated mutations, transactions, history, diffs, extensions, and assets.
-2. **Graphics primitives** — raster, paint, text, shape, fill, group, mask, adjustment, filter, selection, transform, blend, and clipping behavior.
-3. **Rendering** — an incremental GPU preview path and an authoritative high-quality export path.
-4. **Automation surfaces** — JavaScript APIs, worker sessions, and the `lg` CLI.
-5. **Editor toolkit** — framework-neutral viewport, hit-testing, transform, painting, selection, snapping, keyboard, and clipboard behavior.
-6. **Project site** — a custom landing experience, task-oriented documentation, generated API reference, examples, and an interactive playground.
-
-Consumers can use the document and renderer alone, add automation, or build a full editor without adopting a prescribed visual interface.
-
-## Technology stack
-
-Layered Graphics is developed as one monorepo containing the engine, runtime bindings, CLI, JavaScript packages, editor toolkit, examples, specifications, and tests.
-
-- **Rust** owns the canonical document engine, command reducer, history, asset/container handling, retained and authoritative CPU renderers, native Node bindings, and native `lg` CLI.
-- **WebAssembly** brings the Rust engine and authoritative renderer to browsers and provides the portable execution path for JavaScript runtimes.
-- **TypeScript** owns the public JavaScript SDK, command-compiling imperative helpers, worker protocol/session, lifecycle recovery and optional future editor bindings.
-- **WebGPU** composites retained top-level layer textures and directly presents worker preview frames when available. Canvas2D presents authoritative retained Rust/WASM pixels as fallback. Neither normal preview path uses encoded images.
-- **Cargo workspaces and pnpm workspaces** manage the Rust and TypeScript portions of the repository.
-- **Astro and Starlight** power the landing and documentation site as a statically deployable monorepo application.
-
-The engine remains modular: consumers should not need to download editor bindings, optional graphics capabilities, or native integrations they do not use. See [Technology Stack](docs/TECH_STACK.md) for package boundaries, tooling, and dependency policy.
-
-## Design principles
-
-### Commands are the common language
-
-Every document mutation is represented as a validated command. User gestures, imperative API calls, scripts, CLI subcommands, and agent actions all pass through the same execution path.
+Every mutation uses the same validated operation protocol:
 
 ```ts
 doc.execute([
@@ -92,14 +60,7 @@ doc.execute([
     layer: {
       id: "hero",
       type: "image",
-      name: "Hero",
       assetId: "hero-image",
-    },
-  },
-  {
-    op: "layerUpdate",
-    id: "hero",
-    set: {
       opacity: 0.7,
       blendMode: "multiply",
     },
@@ -107,7 +68,7 @@ doc.execute([
 ]);
 ```
 
-An ergonomic imperative API compiles to those commands rather than defining separate behavior:
+The imperative API compiles to those operations:
 
 ```ts
 const hero = doc.layers.add({
@@ -119,110 +80,46 @@ const hero = doc.layers.add({
 hero.update({ opacity: 0.7, blendMode: "multiply" });
 ```
 
-### The document is canonical
+The native CLI exposes the same behavior to humans and agents:
 
-The document engine owns canonical graphical state. Executing commands produces a new revision and a changeset that renderers, editor bindings, and application stores can observe.
-
-Rendering state is derived and replaceable. Applications may attach their own models, but should not maintain a competing copy of the layer tree.
-
-### Editing is non-destructive by default
-
-Transforms, text, shapes, masks, filters, adjustments, and cropping remain editable unless a caller explicitly requests a destructive raster operation.
-
-### Preview and export have different jobs
-
-Browser previews prioritize latency and may trade small amounts of detail for responsiveness. Authoritative exports prioritize quality, repeatability, and compatibility with the documented compositing semantics.
-
-### Compatibility over novelty
-
-Where established expectations exist, Layered Graphics follows Photoshop-like behavior for layer ordering, groups, clipping masks, selections, blend modes, masks, and effect scope. Deviations are documented and tested.
-
-### Applications can extend without fragmenting the format
-
-`.kgfx` defines a portable graphical core and permits namespaced application metadata. Unknown extensions are preserved across load and save. A consumer that does not understand a Spriteform extension can still inspect and render its graphical composition.
-
-## The `.kgfx` document
-
-A `.kgfx` file is portable and self-contained by default. It contains a versioned document manifest and embedded assets such as images and fonts. Linked assets are supported for workspace-oriented applications.
-
-The core model includes:
-
-- Canvas dimensions, DPI, and color settings
-- Stable layer and asset identifiers, with extension points for later masks
-- A hierarchical layer tree
-- Layer properties and non-destructive operations
-- Embedded or linked assets
-- Namespaced application metadata
-- Schema version and migration information
-
-The format must be safe to validate without rendering and practical to inspect or modify through the CLI.
-
-The implemented experimental contract is documented in [`.kgfx` v1](docs/spec/kgfx-v1.md) and [Command protocol v1](docs/spec/commands-v1.md).
-
-## CLI direction
-
-The CLI is a first-class authoring interface:
-
-```text
-lg new <file>.kgfx [--width N --height N --dpi N]
-lg exec <file>.kgfx [ops.json | -]
-
-lg layer add <file>.kgfx --type image --asset-id hero [--id ...]
-lg layer update <file>.kgfx <id> --set opacity=0.7 --set blend=multiply
-lg layer rm <file>.kgfx <id>
-lg layer ls <file>.kgfx [--json]
-lg layer move <file>.kgfx <id> --to 3 | --above <id> | --below <id>
-
-lg asset add <file>.kgfx --id hero ./hero.png
-lg asset ls <file>.kgfx
-lg asset rm <file>.kgfx <id>
-
-lg render <file>.kgfx -o out.png [--format png|jpg|webp --layer <id> --scale 2]
-lg inspect <file>.kgfx [--path layers.0.opacity]
-lg validate <file.kgfx | ops.json>
-lg diff <a>.kgfx <b>.kgfx
-lg watch <file>.kgfx --ops ops.json --render out.png
+```bash
+lg new card.kgfx --width 1200 --height 630 --dpi 144
+lg asset add card.kgfx --id hero ./hero.png
+lg layer add card.kgfx --type image --id hero-layer --asset-id hero
+lg layer update card.kgfx hero-layer --set opacity=0.7 --set blend=multiply
+lg inspect card.kgfx --json
+lg render card.kgfx -o card.webp --format webp
 ```
 
-Structured output is available for agent and script consumption. Human-readable output remains concise and composable.
+Use `lg --help` for the complete command surface. The [CLI guide](apps/site/src/content/docs/docs/cli.md), [`.kgfx` specification](docs/spec/kgfx-v1.md), and [command specification](docs/spec/commands-v1.md) document the current contract.
 
-## Initial format support
+## Repository map
 
-Version 1 targets:
+```text
+crates/lg-core       canonical document, container, history, inspection, rendering
+crates/lg-cli        native lg command-line interface
+crates/lg-wasm       WebAssembly bindings
+crates/lg-node       native Node bindings
+packages/core        TypeScript/WASM SDK
+packages/browser     retained worker and preview presentation
+packages/node        native Node package
+apps/site            Astro landing page, Starlight docs, browser proof
+examples             reproducible editable compositions
+spec                 generated document and command schemas
+```
 
-- PNG
-- JPEG
-- WebP
+The architecture is Rust + WebAssembly + TypeScript + WebGPU, in a Cargo/pnpm monorepo. See [Technology Stack](docs/TECH_STACK.md) and [runtime support](docs/API_SUPPORT.md).
 
-Later versions may add GIF, SVG, and PDF output. PSD compatibility, CMYK and print-production workflows, video timelines, 3D, built-in real-time collaboration, and a ready-made editor interface are not initial goals.
+## Lean roadmap
 
-## Performance philosophy
+1. Expand compositing with masks, clipping, shapes, richer text, gradients, adjustments, selections, and paint.
+2. Add the framework-neutral viewport, hit-testing, transforms, snapping, clipboard, and input controllers needed by custom editors.
+3. Prove the engine in Spriteform, harden packages and migrations, then stabilize v1.
 
-The engine must be smart across very different workloads rather than optimized for only one canvas size:
-
-- Pixel art from tiny sprites through large variant sets
-- General graphics at 2K and 4K resolutions
-- Documents containing hundreds of layers
-- Batch jobs producing many related outputs
-
-The implementation will use incremental invalidation, cached intermediate results, preview resolution tiers, lazy asset decoding, and large-document tiling where they materially improve a workload. Performance claims will be tied to checked-in benchmark documents and reproducible measurements.
-
-## Roadmap
-
-Development is divided into five phases. Phases 1 and 2 are complete:
-
-1. Executable document and CLI foundation
-2. Browser preview and rendering performance
-3. Photoshop-like graphics primitives
-4. Headless editor toolkit
-5. Spriteform integration and production hardening
-
-See [ROADMAP.md](ROADMAP.md) for the high-level sequence, [Technology Stack](docs/TECH_STACK.md) for implementation choices, and the [phase plans](docs/plans/) for detailed scope and acceptance criteria. The [Website and Documentation Plan](docs/plans/06-website-documentation.md) runs across every implementation phase.
-
-See the [Phase 1/2 completion audit](docs/PHASES_1_2_AUDIT.md), [browser rendering guide](docs/BROWSER_RENDERING.md), [runtime support](docs/API_SUPPORT.md), and [benchmark results](docs/BENCHMARKS.md) for the implemented contracts and evidence.
+See the [roadmap](docs/ROADMAP.md) and [implementation plans](docs/plans/) for scope and acceptance criteria.
 
 ## Contributing
 
-Layered Graphics is intended to be developed in the open. Contribution instructions, governance, licensing details, and compatibility policies will be added with the initial repository scaffold.
+Issues and pull requests are welcome. Start with [CONTRIBUTING.md](CONTRIBUTING.md), follow the [Code of Conduct](CODE_OF_CONDUCT.md), and report vulnerabilities through [SECURITY.md](SECURITY.md).
 
-During the planning stage, the most valuable contributions are concrete authoring workflows, representative documents, compatibility references, and measurable performance cases.
+Layered Graphics is available under the [MIT License](LICENSE).

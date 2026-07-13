@@ -6,7 +6,7 @@ fn lg() -> Command {
 }
 
 #[test]
-fn complete_milestone_cli_surface_operates_on_real_files() {
+fn complete_cli_surface_operates_on_real_files() {
     let directory = tempfile::tempdir().unwrap();
     let doc = directory.path().join("fixture.kgfx");
     let asset = directory.path().join("asset.bin");

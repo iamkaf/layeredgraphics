@@ -1,5 +1,6 @@
 ---
 import StarlightPage from "@astrojs/starlight/components/StarlightPage.astro";
+const base = `${import.meta.env.BASE_URL}/`.replace(/\/{2,}$/, "/");
 ---
 
 <StarlightPage frontmatter={{ title: "Browser rendering proof", description: "Render the same .kgfx banner through the Rust/WASM engine in your browser." }}>
@@ -13,7 +14,7 @@ import StarlightPage from "@astrojs/starlight/components/StarlightPage.astro";
       <div><dt>Output</dt><dd data-output></dd></div>
     </dl>
   </div>
-  <p><a href="/readme-banner.kgfx" download>Download the editable <code>readme-banner.kgfx</code> fixture</a></p>
+  <p><a href={`${base}readme-banner.kgfx`} download>Download the editable <code>readme-banner.kgfx</code> fixture</a></p>
   <h2>Retained worker preview</h2>
   <p>The canvas below is rendered in a dedicated worker. WebGPU presents it when available; Canvas2D is the tested fallback.</p>
   <div class="worker-proof" data-worker-proof="loading">
@@ -30,7 +31,7 @@ import StarlightPage from "@astrojs/starlight/components/StarlightPage.astro";
   const status = root?.querySelector<HTMLElement>(".status");
   try {
     await initialize();
-    const response = await fetch("/readme-banner.kgfx");
+    const response = await fetch(`${import.meta.env.BASE_URL}/readme-banner.kgfx`);
     if (!response.ok) throw new Error(`Document request failed with ${response.status}`);
     const bytes = new Uint8Array(await response.arrayBuffer());
     const diagnostics = validateKgfx(bytes);
@@ -59,7 +60,7 @@ import StarlightPage from "@astrojs/starlight/components/StarlightPage.astro";
     authored.close();
 
     const commandStyle = await GraphicsDocument.create({ width: 8, height: 8 });
-    const equivalenceOps = await fetch("/api-equivalence.ops.json").then((response) => response.json()) as Command[];
+    const equivalenceOps = await fetch(`${import.meta.env.BASE_URL}/api-equivalence.ops.json`).then((response) => response.json()) as Command[];
     commandStyle.execute(equivalenceOps);
     const imperativeStyle = await GraphicsDocument.create({ width: 8, height: 8 });
     imperativeStyle.updateCanvas({ dpi: 144, color: [1, 2, 3, 4] });
@@ -73,7 +74,7 @@ import StarlightPage from "@astrojs/starlight/components/StarlightPage.astro";
     } catch (error) {
       if (!(error instanceof CommandExecutionError) || error.commandIndex !== 0 || error.code !== "command.invalid") throw error;
     }
-    const linkedResponse = await fetch("/readme-banner.png");
+    const linkedResponse = await fetch(`${import.meta.env.BASE_URL}/readme-banner.png`);
     const linkedBuffer = await linkedResponse.arrayBuffer();
     const linkedBytes = new Uint8Array(linkedBuffer);
     const linkedHash = [...new Uint8Array(await crypto.subtle.digest("SHA-256", linkedBytes))]

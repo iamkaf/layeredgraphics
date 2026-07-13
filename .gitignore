@@ -6,5 +6,6 @@ coverage/
 test-results/
 playwright-report/
 examples/readme-banner/output/
+examples/showcase/output/
 *.kgfx.tmp
 *.node

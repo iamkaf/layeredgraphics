@@ -46,6 +46,12 @@ jobs:
       - name: Build and verify the project banner
         run: ./examples/readme-banner/build.sh
 
+      - name: Build and verify the editable showcase
+        run: ./examples/showcase/build.sh
+
+      - name: Verify checked visual outputs
+        run: git diff --exit-code -- apps/site/public
+
       - name: Verify generated schemas are current
         run: ./scripts/generate-schemas.sh && git diff --exit-code -- spec
 
