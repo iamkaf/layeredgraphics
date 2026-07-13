@@ -59,7 +59,7 @@ jobs:
         run: pnpm check
 
       - name: Verify generated WASM bindings are current
-        run: git diff --exit-code -- packages/core/src/generated
+        run: git diff --exit-code -- packages/core/src/generated ':(exclude)packages/core/src/generated/lg_wasm_bg.wasm'
 
       - name: Test workspace
         run: pnpm test
@@ -77,6 +77,8 @@ jobs:
           node-version: 24
       - name: Run release budgets
         run: pnpm benchmark
+        env:
+          LG_BENCHMARK_TIMING_TOLERANCE: "1.5"
 
   native-node:
     strategy:

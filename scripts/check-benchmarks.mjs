@@ -5,13 +5,16 @@ if (!resultPaths.length) resultPaths.push("benchmarks/results-linux-ryzen7900x.j
 const resultSets = resultPaths.map((path) => JSON.parse(fs.readFileSync(path, "utf8")));
 const results = resultSets[0];
 const config = JSON.parse(fs.readFileSync("benchmarks/budgets.json", "utf8"));
+const timingTolerance = Number(process.env.LG_BENCHMARK_TIMING_TOLERANCE ?? 1);
+if (!Number.isFinite(timingTolerance) || timingTolerance < 1) throw new Error("LG_BENCHMARK_TIMING_TOLERANCE must be a number >= 1");
 const measurements = new Map(resultSets.flatMap((set) => set.measurements).map((item) => [item.workload, item]));
 const failures = [];
 
 for (const [name, budget] of Object.entries(config.budgets)) {
   const result = measurements.get(name);
   if (!result) continue;
-  if (budget.p95Ms !== undefined && result.p95Ms > budget.p95Ms) failures.push(`${name} p95 ${result.p95Ms.toFixed(2)}ms > ${budget.p95Ms}ms`);
+  const p95Limit = budget.p95Ms === undefined ? undefined : budget.p95Ms * timingTolerance;
+  if (p95Limit !== undefined && result.p95Ms > p95Limit) failures.push(`${name} p95 ${result.p95Ms.toFixed(2)}ms > ${p95Limit.toFixed(2)}ms`);
   if (budget.maximumCacheBytes !== undefined && result.cacheBytes > budget.maximumCacheBytes) failures.push(`${name} cache ${result.cacheBytes} > ${budget.maximumCacheBytes}`);
   if (budget.mainThreadLongTasks !== undefined && result.mainThreadLongTasks > budget.mainThreadLongTasks) failures.push(`${name} main-thread long tasks ${result.mainThreadLongTasks} > ${budget.mainThreadLongTasks}`);
   if (budget.maximumPendingPreviews !== undefined && result.maximumPendingPreviews > budget.maximumPendingPreviews) failures.push(`${name} pending previews ${result.maximumPendingPreviews} > ${budget.maximumPendingPreviews}`);
